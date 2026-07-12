@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+*.whl
+venv/
+.venv/
+*.so
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend uploads / results
+backend/uploads/
+backend/results/
+
+# Data (raw video datasets + processed face crops)
+data/raw/
+data/processed/images/
+data/processed/haarcascade_frontalface_default.xml
+
+# Model weights (user must train or download)
+weights/
+
+# Training artifacts
+data/splits/splits.json
+
+# Logs
+*.log
