@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-LEFT_EYE = [362, 380, 374, 263, 386, 385]
-RIGHT_EYE = [33, 159, 158, 133, 153, 145]
+LEFT_EYE = [33, 160, 158, 133, 153, 145]
+RIGHT_EYE = [362, 385, 387, 362, 380, 374]
 
 NOSE_TIP = 4
 CHIN = 199
@@ -21,7 +21,8 @@ MODEL_POINTS = np.array([
 ], dtype=np.float64)
 
 EAR_THRESHOLD = 0.21
-CONSEC_FRAMES = 3
+BLINK_MIN_DURATION_SEC = 0.05
+BLINK_MAX_DURATION_SEC = 0.5
 EXPECTED_BLINKS_PER_MINUTE = 17
 
 
@@ -68,28 +69,42 @@ def _estimate_head_pose(landmarks: np.ndarray, image_w: int, image_h: int) -> tu
     return float(angles[0]), float(angles[1]), float(angles[2])
 
 
-def _compute_blink_stats(all_landmarks: list[np.ndarray], fps: float) -> dict:
+def _compute_blink_stats(all_landmarks: list, fps: float, skip: int) -> dict:
     blink_count = 0
-    frame_counter = 0
+    eyes_closed = False
+    closed_start_time = 0.0
+    valid_frames = 0
 
-    for landmarks in all_landmarks:
+    time_per_frame = skip / fps if fps > 0 else 1.0 / 30.0
+
+    for i, landmarks in enumerate(all_landmarks):
+        t = i * time_per_frame
         if landmarks is None:
+            if eyes_closed:
+                eyes_closed = False
             continue
+
+        valid_frames += 1
         left_ear = _eye_aspect_ratio(LEFT_EYE, landmarks)
         right_ear = _eye_aspect_ratio(RIGHT_EYE, landmarks)
         avg_ear = (left_ear + right_ear) / 2.0
 
         if avg_ear < EAR_THRESHOLD:
-            frame_counter += 1
+            if not eyes_closed:
+                eyes_closed = True
+                closed_start_time = t
         else:
-            if frame_counter >= CONSEC_FRAMES:
-                blink_count += 1
-            frame_counter = 0
+            if eyes_closed:
+                duration = t - closed_start_time
+                if BLINK_MIN_DURATION_SEC <= duration <= BLINK_MAX_DURATION_SEC:
+                    blink_count += 1
+                eyes_closed = False
 
-    duration_minutes = len(all_landmarks) / fps / 60.0 if fps > 0 else 1.0
-    if duration_minutes < 1e-6:
+    valid_duration_sec = valid_frames * time_per_frame
+    if valid_duration_sec < 2.0:
         return {"blink_score": 0.5, "blink_count": 0, "blinks_per_min": 0.0}
 
+    duration_minutes = valid_duration_sec / 60.0
     actual_rate = blink_count / duration_minutes
     deviation = abs(actual_rate - EXPECTED_BLINKS_PER_MINUTE) / EXPECTED_BLINKS_PER_MINUTE
     return {
@@ -99,7 +114,7 @@ def _compute_blink_stats(all_landmarks: list[np.ndarray], fps: float) -> dict:
     }
 
 
-def _compute_pose_stats(all_landmarks: list[np.ndarray], image_w: int, image_h: int) -> dict:
+def _compute_pose_stats(all_landmarks: list, image_w: int, image_h: int) -> dict:
     yaws, pitches, rolls = [], [], []
 
     for landmarks in all_landmarks:
@@ -127,7 +142,7 @@ def _compute_pose_stats(all_landmarks: list[np.ndarray], image_w: int, image_h: 
     }
 
 
-def run(frames: list, all_landmarks: list, fps: float = 30.0) -> dict:
+def run(frames: list, all_landmarks: list, fps: float = 30.0, skip: int = 3) -> dict:
     if not frames or not all_landmarks:
         return {"score": 0.5, "blink_score": 0.5, "pose_score": 0.5,
                 "blink_count": 0, "blinks_per_min": 0.0,
@@ -135,7 +150,7 @@ def run(frames: list, all_landmarks: list, fps: float = 30.0) -> dict:
 
     h, w = frames[0].shape[:2]
 
-    blink = _compute_blink_stats(all_landmarks, fps)
+    blink = _compute_blink_stats(all_landmarks, fps, skip)
     pose = _compute_pose_stats(all_landmarks, w, h)
 
     temporal_score = 0.5 * blink["blink_score"] + 0.5 * pose["pose_score"]

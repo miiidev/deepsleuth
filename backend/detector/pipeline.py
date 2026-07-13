@@ -24,10 +24,8 @@ def run_pipeline(video_path: str, task_id: str, result_dir: str):
     try:
         task_store.update(task_id, status="processing", progress=0, message="Extracting frames...")
 
-        frames = extraction.extract_frames(video_path, skip=settings.SKIP_FRAME)
+        frames, fps = extraction.extract_frames(video_path, skip=settings.SKIP_FRAME)
         total = len(frames)
-        if total == 0:
-            raise ValueError("No frames extracted from video")
 
         _progress_callback(task_id, 5, f"Extracted {total} frames")
 
@@ -60,7 +58,7 @@ def run_pipeline(video_path: str, task_id: str, result_dir: str):
                 all_landmarks.append(faces[0].landmarks)
             else:
                 all_landmarks.append(None)
-        temporal_data = temporal.run(frames, all_landmarks, fps=30.0)
+        temporal_data = temporal.run(frames, all_landmarks, fps=fps, skip=settings.SKIP_FRAME)
 
         _progress_callback(task_id, 80, "Fusing scores...")
         merged_regions = _merge_region_scores(per_face_regions)
