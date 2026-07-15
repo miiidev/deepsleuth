@@ -118,16 +118,16 @@ export default function VideoPlayer({ taskId, frameFaceData }: Props) {
         ctx.drawImage(heatCanvas, sx, sy, sw, sh);
       } else {
         const alpha = 0.3 + Math.min(1, face.score) * 0.4;
-        const r = isSuspicious ? 217 : 13;
-        const g = isSuspicious ? 119 : 148;
-        const b = isSuspicious ? 6 : 148;
+        const r = isSuspicious ? 255 : 0;
+        const g = isSuspicious ? 51 : 255;
+        const b = isSuspicious ? 51 : 65;
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
         ctx.fillRect(sx, sy, sw, sh);
       }
 
       const borderColor = isSuspicious
-        ? "rgba(217, 119, 6, 0.9)"
-        : "rgba(13, 148, 136, 0.9)";
+        ? "rgba(255, 51, 51, 0.9)"
+        : "rgba(0, 255, 65, 0.9)";
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = 2;
       ctx.strokeRect(sx, sy, sw, sh);
@@ -135,11 +135,11 @@ export default function VideoPlayer({ taskId, frameFaceData }: Props) {
       const label = isSuspicious
         ? `Anomaly: ${face.score.toFixed(2)}`
         : `Appears consistent`;
-      ctx.font = "bold 14px sans-serif";
+      ctx.font = "bold 14px JetBrains Mono, monospace";
       const textWidth = ctx.measureText(label).width;
       ctx.fillStyle = isSuspicious
-        ? "rgba(217, 119, 6, 0.85)"
-        : "rgba(13, 148, 136, 0.85)";
+        ? "rgba(255, 51, 51, 0.85)"
+        : "rgba(0, 255, 65, 0.85)";
       ctx.fillRect(sx, sy - 22, textWidth + 8, 22);
       ctx.fillStyle = "#fff";
       ctx.fillText(label, sx + 4, sy - 6);
@@ -166,7 +166,7 @@ export default function VideoPlayer({ taskId, frameFaceData }: Props) {
   }, [showOverlay, drawOverlay]);
 
   return (
-    <div className="bg-gray-900 rounded-xl overflow-hidden">
+    <div>
       <div className="relative">
         <video
           ref={videoRef}
@@ -180,16 +180,16 @@ export default function VideoPlayer({ taskId, frameFaceData }: Props) {
           style={{ display: showOverlay ? "block" : "none" }}
         />
       </div>
-      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800">
-        <span className="text-sm text-gray-400">Overlay</span>
+      <div className="flex items-center justify-between px-4 py-3 border-t border-[#1F1F1F]">
+        <span className="text-xs font-mono text-gray-600">OVERLAY</span>
         <button
           onClick={() => setShowOverlay((v) => !v)}
           className={`relative w-14 h-7 rounded-full transition-colors shrink-0 ${
-            showOverlay ? "bg-purple-600" : "bg-gray-700"
+            showOverlay ? "bg-[#00FF41]" : "bg-gray-700"
           }`}
         >
           <span
-            className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${
+            className={`absolute top-1 left-1 w-5 h-5 bg-black rounded-full transition-transform ${
               showOverlay ? "translate-x-7" : "translate-x-0"
             }`}
           />

@@ -2,28 +2,15 @@ import cv2
 import numpy as np
 
 LEFT_EYE = [33, 160, 158, 133, 153, 145]
-RIGHT_EYE = [362, 385, 387, 362, 380, 374]
-
-NOSE_TIP = 4
-CHIN = 199
-LEFT_EYE_CORNER = 33
-RIGHT_EYE_CORNER = 263
-LEFT_MOUTH = 61
-RIGHT_MOUTH = 291
-
-MODEL_POINTS = np.array([
-    (0.0, 0.0, 0.0),
-    (0.0, -330.0, -65.0),
-    (-225.0, 170.0, -135.0),
-    (225.0, 170.0, -135.0),
-    (-150.0, -150.0, -125.0),
-    (150.0, -150.0, -125.0),
-], dtype=np.float64)
+RIGHT_EYE = [362, 385, 387, 263, 380, 374]
 
 EAR_THRESHOLD = 0.21
 BLINK_MIN_DURATION_SEC = 0.05
 BLINK_MAX_DURATION_SEC = 0.5
 EXPECTED_BLINKS_PER_MINUTE = 17
+
+DCT_SIZE = 224
+HIGH_FREQ_CUTOFF = 32
 
 
 def _eye_aspect_ratio(eye_indices: list[int], landmarks: np.ndarray) -> float:
@@ -41,32 +28,6 @@ def _eye_aspect_ratio(eye_indices: list[int], landmarks: np.ndarray) -> float:
     if C < 1e-6:
         return 0.3
     return float((A + B) / (2.0 * C))
-
-
-def _estimate_head_pose(landmarks: np.ndarray, image_w: int, image_h: int) -> tuple[float, float, float]:
-    indices = [NOSE_TIP, CHIN, LEFT_EYE_CORNER, RIGHT_EYE_CORNER, LEFT_MOUTH, RIGHT_MOUTH]
-    image_points = np.array([
-        [landmarks[i][0], landmarks[i][1]] for i in indices
-    ], dtype=np.float64)
-
-    focal_length = image_w
-    center = (image_w / 2, image_h / 2)
-    camera_matrix = np.array([
-        [focal_length, 0, center[0]],
-        [0, focal_length, center[1]],
-        [0, 0, 1],
-    ], dtype=np.float64)
-    dist_coeffs = np.zeros((4, 1))
-
-    success, rvec, tvec = cv2.solvePnP(
-        MODEL_POINTS, image_points, camera_matrix, dist_coeffs,
-    )
-    if not success:
-        return 0.0, 0.0, 0.0
-
-    rmat, _ = cv2.Rodrigues(rvec)
-    angles, _, _, _, _, _ = cv2.RQDecomp3x3(rmat)
-    return float(angles[0]), float(angles[1]), float(angles[2])
 
 
 def _compute_blink_stats(all_landmarks: list, fps: float, skip: int) -> dict:
@@ -114,53 +75,95 @@ def _compute_blink_stats(all_landmarks: list, fps: float, skip: int) -> dict:
     }
 
 
-def _compute_pose_stats(all_landmarks: list, image_w: int, image_h: int) -> dict:
-    yaws, pitches, rolls = [], [], []
+def _extract_face_region(frame: np.ndarray, landmarks: np.ndarray) -> np.ndarray | None:
+    h, w = frame.shape[:2]
+    x_min = int(landmarks[:, 0].min())
+    y_min = int(landmarks[:, 1].min())
+    x_max = int(landmarks[:, 0].max())
+    y_max = int(landmarks[:, 1].max())
 
-    for landmarks in all_landmarks:
+    pad = 10
+    x_min = max(0, x_min - pad)
+    y_min = max(0, y_min - pad)
+    x_max = min(w, x_max + pad)
+    y_max = min(h, y_max + pad)
+
+    crop = frame[y_min:y_max, x_min:x_max]
+    if crop.size == 0:
+        return None
+    return crop
+
+
+def _dct_high_freq_vector(face: np.ndarray) -> np.ndarray | None:
+    gray = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
+    gray = cv2.resize(gray, (DCT_SIZE, DCT_SIZE)).astype(np.float32)
+    dct = cv2.dct(gray)
+    return dct[HIGH_FREQ_CUTOFF:, HIGH_FREQ_CUTOFF:].flatten()
+
+
+def _compute_flickering(frames: list, all_landmarks: list, skip: int, fps: float) -> float:
+    vectors = []
+
+    for i, (frame, landmarks) in enumerate(zip(frames, all_landmarks)):
         if landmarks is None:
             continue
-        yaw, pitch, roll = _estimate_head_pose(landmarks, image_w, image_h)
-        yaws.append(yaw)
-        pitches.append(pitch)
-        rolls.append(roll)
+        face = _extract_face_region(frame, landmarks)
+        if face is None:
+            continue
+        vec = _dct_high_freq_vector(face)
+        if vec is not None:
+            vectors.append(vec)
 
-    if len(yaws) < 2:
-        return {"pose_score": 0.5, "yaw_var": 0.0, "pitch_var": 0.0, "roll_var": 0.0}
+    if len(vectors) < 3:
+        return 0.5
 
-    yaw_var = float(np.var(yaws))
-    pitch_var = float(np.var(pitches))
-    roll_var = float(np.var(rolls))
+    vectors = np.array(vectors)
+    coeff_var = np.var(vectors, axis=0)
+    mean_var = float(np.mean(coeff_var))
 
-    total_var = yaw_var + pitch_var + roll_var
-    score = total_var / 50.0
-    return {
-        "pose_score": float(np.clip(score, 0.0, 1.0)),
-        "yaw_var": round(yaw_var, 2),
-        "pitch_var": round(pitch_var, 2),
-        "roll_var": round(roll_var, 2),
-    }
+    score = np.clip(mean_var / 1500.0, 0.0, 1.0)
+    return float(score)
+
+
+def _compute_landmark_stability(all_landmarks: list) -> float:
+    valid = [lm for lm in all_landmarks if lm is not None]
+    if len(valid) < 3:
+        return 0.5
+
+    centered = []
+    for lm in valid:
+        centroid = lm[:, :2].mean(axis=0)
+        centered.append(lm[:, :2] - centroid)
+
+    centered = np.array(centered)
+    x_var = np.var(centered[:, :, 0])
+    y_var = np.var(centered[:, :, 1])
+    total_var = float(x_var + y_var)
+
+    score = np.clip(total_var / 200.0, 0.0, 1.0)
+    return float(score)
 
 
 def run(frames: list, all_landmarks: list, fps: float = 30.0, skip: int = 3) -> dict:
     if not frames or not all_landmarks:
-        return {"score": 0.5, "blink_score": 0.5, "pose_score": 0.5,
-                "blink_count": 0, "blinks_per_min": 0.0,
-                "yaw_var": 0.0, "pitch_var": 0.0, "roll_var": 0.0}
-
-    h, w = frames[0].shape[:2]
+        return {"score": 0.5, "blink_score": 0.5, "blink_count": 0,
+                "blinks_per_min": 0.0, "flickering_score": 0.5,
+                "landmark_stability": 0.5}
 
     blink = _compute_blink_stats(all_landmarks, fps, skip)
-    pose = _compute_pose_stats(all_landmarks, w, h)
+    flickering = _compute_flickering(frames, all_landmarks, skip, fps)
+    stability = _compute_landmark_stability(all_landmarks)
 
-    temporal_score = 0.5 * blink["blink_score"] + 0.5 * pose["pose_score"]
+    temporal_score = (
+        0.35 * blink["blink_score"]
+        + 0.40 * flickering
+        + 0.25 * stability
+    )
     return {
         "score": float(np.clip(temporal_score, 0.0, 1.0)),
         "blink_score": blink["blink_score"],
-        "pose_score": pose["pose_score"],
         "blink_count": blink["blink_count"],
         "blinks_per_min": blink["blinks_per_min"],
-        "yaw_var": pose["yaw_var"],
-        "pitch_var": pose["pitch_var"],
-        "roll_var": pose["roll_var"],
+        "flickering_score": flickering,
+        "landmark_stability": stability,
     }

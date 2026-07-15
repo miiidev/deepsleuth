@@ -1,10 +1,13 @@
 import numpy as np
 import cv2
 import os
+import logging
 import torch
 from app.config import settings
 from detector.face_detection import FaceRegion
 from detector.xception import Xception
+
+logger = logging.getLogger(__name__)
 
 _model = None
 _device = None
@@ -52,9 +55,10 @@ def _load_model():
 
     weights_path = os.path.join(settings.WEIGHTS_DIR, "xception_best.pth")
     if not os.path.exists(weights_path):
+        logger.warning("Spatial CNN weights not found at %s — spatial analysis will be skipped", weights_path)
         return None
 
-    _device = torch.device("cpu")
+    _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     _model = Xception(num_classes=2)
     checkpoint = torch.load(weights_path, map_location=_device, weights_only=False)
     if "model_state_dict" in checkpoint:
@@ -81,6 +85,7 @@ def _load_model():
 
 
 def preprocess_face(face: np.ndarray, size: int = 299) -> torch.Tensor:
+    face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
     face = cv2.resize(face, (size, size))
     face = face.astype(np.float32) / 127.5 - 1.0
     face = np.transpose(face, (2, 0, 1))
@@ -104,6 +109,7 @@ def compute_gradcam(face_tensor: torch.Tensor, target_class: int = 1) -> np.ndar
     output.backward(gradient=one_hot, retain_graph=True)
 
     if _feature_maps is None or _gradients is None:
+        logger.warning("Grad-CAM hooks did not fire — returning zero heatmap")
         return np.zeros((56, 56), dtype=np.float32)
 
     weights = _gradients.mean(dim=(2, 3), keepdim=True)
@@ -165,7 +171,11 @@ def run(faces: list[FaceRegion]) -> tuple[float, list[float], list[list[float]],
         heatmaps.append(cam.flatten().tolist())
 
         ch, cw = face_region.crop.shape[:2]
-        region_scores = _region_scores(cam, face_region.landmarks, cw, ch)
+        origin_x, origin_y = face_region.bbox[0], face_region.bbox[1]
+        landmarks_crop = face_region.landmarks.copy()
+        landmarks_crop[:, 0] -= origin_x
+        landmarks_crop[:, 1] -= origin_y
+        region_scores = _region_scores(cam, landmarks_crop, cw, ch)
         regions_list.append(region_scores)
 
     mean_score = np.mean(scores) if scores else 0.5

@@ -1,0 +1,121 @@
+[
+  {
+    "id": "aab060f89cd8",
+    "filename": "103_082.mp4",
+    "suspicion_level": "moderate",
+    "fused_score": 0.5194,
+    "created_at": "2026-07-15T11:38:41.839192+00:00"
+  },
+  {
+    "id": "3b057441df85",
+    "filename": "103.mp4",
+    "suspicion_level": "none",
+    "fused_score": 0.1983,
+    "created_at": "2026-07-15T11:33:49.345816+00:00"
+  },
+  {
+    "id": "1f15f38093b4",
+    "filename": "103.mp4",
+    "suspicion_level": "moderate",
+    "fused_score": 0.584,
+    "created_at": "2026-07-15T10:59:30.072595+00:00"
+  },
+  {
+    "id": "8edf650f15ce",
+    "filename": "103_082.mp4",
+    "suspicion_level": "high",
+    "fused_score": 0.9226,
+    "created_at": "2026-07-15T10:57:29.542852+00:00"
+  },
+  {
+    "id": "0cd68e8c23da",
+    "filename": "067.mp4",
+    "suspicion_level": "moderate",
+    "fused_score": 0.5574,
+    "created_at": "2026-07-14T11:26:14.779793+00:00"
+  },
+  {
+    "id": "2cbacccc5933",
+    "filename": "074.mp4",
+    "suspicion_level": "moderate",
+    "fused_score": 0.629,
+    "created_at": "2026-07-14T11:24:28.473492+00:00"
+  },
+  {
+    "id": "384d915be575",
+    "filename": "074_825.mp4",
+    "suspicion_level": "moderate",
+    "fused_score": 0.666,
+    "created_at": "2026-07-14T11:22:26.619282+00:00"
+  },
+  {
+    "id": "feed5e586004",
+    "filename": "007_132.mp4",
+    "suspicion_level": "moderate",
+    "fused_score": 0.6861,
+    "created_at": "2026-07-14T11:19:32.167887+00:00"
+  },
+  {
+    "id": "220935a31b67",
+    "filename": "007.mp4",
+    "suspicion_level": "moderate",
+    "fused_score": 0.6188,
+    "created_at": "2026-07-14T11:11:54.885390+00:00"
+  },
+  {
+    "id": "ec46a73d3035",
+    "filename": "007.mp4",
+    "suspicion_level": "moderate",
+    "fused_score": 0.6175,
+    "created_at": "2026-07-14T10:41:49.952778+00:00"
+  },
+  {
+    "id": "520a07d9932c",
+    "filename": "007_132.mp4",
+    "suspicion_level": "high",
+    "fused_score": 0.9499,
+    "created_at": "2026-07-14T10:19:30.736332+00:00"
+  },
+  {
+    "id": "dacbbd51e728",
+    "filename": "000_003.mp4",
+    "suspicion_level": "high",
+    "fused_score": 0.957,
+    "created_at": "2026-07-14T10:02:05.372181+00:00"
+  },
+  {
+    "id": "9a722f242348",
+    "filename": "007_132.mp4",
+    "suspicion_level": "high",
+    "fused_score": 0.9477,
+    "created_at": "2026-07-14T08:49:21.680744+00:00"
+  },
+  {
+    "id": "43306e4a79c2",
+    "filename": "009_027.mp4",
+    "suspicion_level": "high",
+    "fused_score": 0.98,
+    "created_at": "2026-07-14T08:07:52.788583+00:00"
+  },
+  {
+    "id": "bc72d3950c0d",
+    "filename": "008_990.mp4",
+    "suspicion_level": "high",
+    "fused_score": 0.804,
+    "created_at": "2026-07-14T07:44:05.817482+00:00"
+  },
+  {
+    "id": "fcfc87c27ab4",
+    "filename": "009_027.mp4",
+    "suspicion_level": "high",
+    "fused_score": 0.98,
+    "created_at": "2026-07-13T15:12:12.958096+00:00"
+  },
+  {
+    "id": "385410aa662f",
+    "filename": "000_003.mp4",
+    "suspicion_level": "high",
+    "fused_score": 0.9564,
+    "created_at": "2026-07-13T15:05:28.076519+00:00"
+  }
+]

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getTaskStatus, type TaskStatus } from "../api/client";
+import Typewriter from "../components/Typewriter";
 
 export default function Processing() {
   const { taskId } = useParams<{ taskId: string }>();
@@ -33,13 +34,13 @@ export default function Processing() {
   if (error) {
     return (
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-red-400 mb-2">Error</h2>
-        <p className="text-gray-400">{error}</p>
+        <h2 className="text-2xl font-heading tracking-wider text-[#FF3333] mb-2 min-h-[2rem]"><Typewriter text="█ ERROR" /></h2>
+        <p className="text-gray-500 font-mono text-sm">{error}</p>
         <button
-          onClick={() => navigate("/")}
-          className="mt-6 px-6 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
+          onClick={() => navigate("/upload")}
+          className="mt-6 px-6 py-2 border border-gray-700 text-gray-500 font-mono text-xs tracking-widest hover:text-gray-300 transition-colors"
         >
-          Back
+          &gt;&gt; BACK
         </button>
       </div>
     );
@@ -50,27 +51,27 @@ export default function Processing() {
 
   return (
     <div className="w-full max-w-md mx-auto text-center">
-      <h2 className="text-2xl font-semibold mb-2">Analyzing Video</h2>
-      <p className="text-gray-500 text-sm mb-8">{msg}</p>
+      <h2 className="text-2xl font-heading tracking-wider text-[#00FF41] mb-2 min-h-[2rem]"><Typewriter text="█ PROCESSING" /></h2>
+      <p className="text-gray-600 font-mono text-sm mb-8 neon-glow-sm">{msg}</p>
 
-      <div className="w-full bg-gray-800 rounded-full h-3 mb-4 overflow-hidden">
+      <div className="w-full bg-[#1A1A1A] rounded-full h-2 mb-4 overflow-hidden border border-[#1F1F1F]">
         <div
-          className="h-full bg-gradient-to-r from-purple-600 to-pink-500 rounded-full transition-all duration-500"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: "#00FF41", boxShadow: "0 0 8px #00FF4166" }}
         />
       </div>
 
-      <p className="text-sm text-gray-400">{pct}%</p>
+      <p className="text-sm font-mono text-[#00FF41] neon-glow-sm">{pct}%</p>
 
       <div className="mt-10 flex justify-center">
-        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[#00FF41] border-t-transparent rounded-full animate-spin" />
       </div>
 
       <button
-        onClick={() => navigate("/")}
-        className="mt-8 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+        onClick={() => navigate("/upload")}
+        className="mt-8 text-xs font-mono text-gray-600 hover:text-gray-400 transition-colors"
       >
-        Cancel and go back
+        &gt;&gt; CANCEL
       </button>
     </div>
   );

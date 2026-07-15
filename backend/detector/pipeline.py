@@ -2,6 +2,7 @@ import os
 import numpy as np
 from app.config import settings
 from app.task_store import task_store
+from app.history_store import history_store
 from detector import extraction, face_detection, spatial_cnn, frequency, temporal, fusion, report
 
 
@@ -24,41 +25,42 @@ def run_pipeline(video_path: str, task_id: str, result_dir: str):
     try:
         task_store.update(task_id, status="processing", progress=0, message="Extracting frames...")
 
-        frames, fps = extraction.extract_frames(video_path, skip=settings.SKIP_FRAME)
+        frames, fps = extraction.extract_frames(video_path, skip=1)
         total = len(frames)
 
         _progress_callback(task_id, 5, f"Extracted {total} frames")
 
-        all_face_crops = []
-        per_frame_scores = []
+        all_landmarks = []
+        cnn_face_crops = []
         frame_face_data = []
 
         for i, frame in enumerate(frames):
             faces = face_detection.detect_faces(frame)
-            all_face_crops.append(faces)
-            frame_idx = i * settings.SKIP_FRAME
-            frame_face_data.append({
-                "frame": frame_idx,
-                "faces": [{"bbox": list(fr.bbox), "score": 0.5} for fr in faces],
-            })
-            pct = 5 + int((i / total) * 30)
-            _progress_callback(task_id, pct, f"Detecting faces... ({i+1}/{total})")
 
-        _progress_callback(task_id, 35, "Running spatial CNN...")
-        all_faces_flat = [f for faces in all_face_crops for f in faces]
-        spatial_score, per_face_scores, per_face_heatmaps, per_face_regions = spatial_cnn.run(all_faces_flat)
-
-        _progress_callback(task_id, 50, "Running frequency analysis...")
-        frequency_score, per_face_freq_scores = frequency.run(all_face_crops)
-
-        _progress_callback(task_id, 65, "Running temporal analysis...")
-        all_landmarks = []
-        for faces in all_face_crops:
             if faces:
                 all_landmarks.append(faces[0].landmarks)
             else:
                 all_landmarks.append(None)
-        temporal_data = temporal.run(frames, all_landmarks, fps=fps, skip=settings.SKIP_FRAME)
+
+            if i % settings.SKIP_FRAME == 0:
+                cnn_face_crops.append(faces)
+                frame_face_data.append({
+                    "frame": i,
+                    "faces": [{"bbox": list(fr.bbox), "score": 0.5} for fr in faces],
+                })
+
+            pct = 5 + int((i / total) * 30)
+            _progress_callback(task_id, pct, f"Detecting faces... ({i+1}/{total})")
+
+        _progress_callback(task_id, 35, "Running spatial CNN...")
+        all_faces_flat = [f for faces in cnn_face_crops for f in faces]
+        spatial_score, per_face_scores, per_face_heatmaps, per_face_regions = spatial_cnn.run(all_faces_flat)
+
+        _progress_callback(task_id, 50, "Running frequency analysis...")
+        frequency_score, per_face_freq_scores = frequency.run(cnn_face_crops)
+
+        _progress_callback(task_id, 65, "Running temporal analysis...")
+        temporal_data = temporal.run(frames, all_landmarks, fps=fps, skip=1)
 
         _progress_callback(task_id, 80, "Fusing scores...")
         merged_regions = _merge_region_scores(per_face_regions)
@@ -67,7 +69,7 @@ def run_pipeline(video_path: str, task_id: str, result_dir: str):
         _progress_callback(task_id, 85, "Building face data...")
         heatmap_idx = 0
         face_score_idx = 0
-        freq_score_idx = 0
+        per_frame_scores = []
         for entry in frame_face_data:
             n = len(entry["faces"])
             for j in range(n):
@@ -76,7 +78,6 @@ def run_pipeline(video_path: str, task_id: str, result_dir: str):
                 per_frame_scores.append(per_face_scores[face_score_idx + j])
             face_score_idx += n
             heatmap_idx += n
-            freq_score_idx += n
 
         _progress_callback(task_id, 90, "Generating report...")
         out_dir = os.path.join(result_dir, task_id)
@@ -95,6 +96,10 @@ def run_pipeline(video_path: str, task_id: str, result_dir: str):
             frame_face_data=frame_face_data,
             analysis_result=fusion_result,
         )
+
+        task_state = task_store.get(task_id)
+        if task_state:
+            history_store.save(task_state, task_state.filename)
 
     except Exception as e:
         task_store.update(task_id, status="failed", error=str(e), progress=0, message="Failed")

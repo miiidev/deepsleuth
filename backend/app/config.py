@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 class Settings:
     UPLOAD_DIR: str = str(BASE_DIR / "backend" / "uploads")
     RESULT_DIR: str = str(BASE_DIR / "backend" / "results")
+    HISTORY_DIR: str = str(BASE_DIR / "backend" / "history")
     WEIGHTS_DIR: str = str(BASE_DIR / "weights")
     FRONTEND_DIST: str = str(BASE_DIR / "frontend" / "dist")
     MAX_VIDEO_DURATION: int = 180
@@ -16,6 +17,7 @@ class Settings:
     def __init__(self):
         os.makedirs(self.UPLOAD_DIR, exist_ok=True)
         os.makedirs(self.RESULT_DIR, exist_ok=True)
+        os.makedirs(self.HISTORY_DIR, exist_ok=True)
         os.makedirs(self.WEIGHTS_DIR, exist_ok=True)
 
 

@@ -11,6 +11,7 @@ class TaskStatus(BaseModel):
     status: str
     progress: int
     message: str
+    filename: str = ""
     error: Optional[str] = None
     frame_scores: list = []
     frame_face_data: list = []

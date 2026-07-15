@@ -13,8 +13,6 @@ DATA_RAW = BASE_DIR / "data" / "raw"
 DATA_OUT = BASE_DIR / "data" / "processed" / "images"
 SKIP_FRAME = 30
 
-REAL_VIDEOS = DATA_RAW / "original_sequences" / "youtube" / "c40" / "videos"
-
 FAKE_SOURCES = [
     "Deepfakes",
     "Face2Face",
@@ -24,8 +22,19 @@ FAKE_SOURCES = [
 
 TARGET_SIZE = 299
 
+QUALITY_LEVELS = ["c23"]
 
-def process_videos(video_dir: Path, label: str, limit: int = 0):
+
+def find_quality_dirs():
+    available = []
+    for q in QUALITY_LEVELS:
+        real_dir = DATA_RAW / "original_sequences" / "youtube" / q / "videos"
+        if real_dir.exists():
+            available.append(q)
+    return available
+
+
+def process_videos(video_dir: Path, label: str, quality: str, method: str = "real", limit: int = 0):
     out_dir = DATA_OUT / label
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -36,14 +45,14 @@ def process_videos(video_dir: Path, label: str, limit: int = 0):
     count = 0
     for vpath in videos:
         stem = vpath.stem
-        frames = extract_frames(str(vpath), skip=SKIP_FRAME)
+        frames, fps = extract_frames(str(vpath), skip=SKIP_FRAME)
         for i, frame in enumerate(frames):
             faces = detect_faces(frame)
             if not faces:
                 continue
-            face = faces[0]
+            face = faces[0].crop
             face = cv2.resize(face, (TARGET_SIZE, TARGET_SIZE))
-            fname = f"{stem}_f{i}.jpg"
+            fname = f"{quality}_{method}_{stem}_f{i}.jpg"
             cv2.imwrite(str(out_dir / fname), face)
             count += 1
 
@@ -55,24 +64,43 @@ def process_videos(video_dir: Path, label: str, limit: int = 0):
 
 
 def main():
+    available = find_quality_dirs()
+    if not available:
+        print("No quality directories found under data/raw/")
+        print("Expected: data/raw/original_sequences/youtube/c40/videos/")
+        sys.exit(1)
+
     print("=== Preprocessing FaceForensics++ ===")
+    print(f"Quality levels: {', '.join(available)}")
     print()
 
-    print("Processing REAL videos...")
-    real_count = process_videos(REAL_VIDEOS, "real")
-
-    print()
+    total_real = 0
     total_fake = 0
-    for src in FAKE_SOURCES:
-        fake_dir = DATA_RAW / "manipulated_sequences" / src / "c40" / "videos"
-        print(f"Processing FAKE ({src})...")
-        cnt = process_videos(fake_dir, "fake")
-        total_fake += cnt
 
-    print()
-    print(f"Total real crops: {real_count}")
+    for quality in available:
+        print(f"--- Quality: {quality} ---")
+        print()
+
+        real_dir = DATA_RAW / "original_sequences" / "youtube" / quality / "videos"
+        print(f"Processing REAL videos ({quality})...")
+        real_count = process_videos(real_dir, "real", quality, method="real")
+        total_real += real_count
+
+        print()
+        for src in FAKE_SOURCES:
+            fake_dir = DATA_RAW / "manipulated_sequences" / src / quality / "videos"
+            if not fake_dir.exists():
+                print(f"  Skipping {src}/{quality} (not found)")
+                continue
+            print(f"Processing FAKE ({src}/{quality})...")
+            cnt = process_videos(fake_dir, "fake", quality, method=src)
+            total_fake += cnt
+
+        print()
+
+    print(f"Total real crops: {total_real}")
     print(f"Total fake crops: {total_fake}")
-    print(f"Grand total:      {real_count + total_fake}")
+    print(f"Grand total:      {total_real + total_fake}")
 
 
 if __name__ == "__main__":

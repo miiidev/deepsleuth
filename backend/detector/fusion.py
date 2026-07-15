@@ -51,16 +51,21 @@ def _temporal_explanation(data: dict) -> str:
     else:
         parts.append("Blink rate: undetectable")
 
-    yaw_var = data.get("yaw_var", 0)
-    pitch_var = data.get("pitch_var", 0)
-    roll_var = data.get("roll_var", 0)
-    total_var = yaw_var + pitch_var + roll_var
-    if total_var < 5:
-        parts.append("Head movement: very low variance — subject appears static")
-    elif total_var < 20:
-        parts.append("Head movement: within normal range")
+    flick = data.get("flickering_score", 0.5)
+    if flick > 0.7:
+        parts.append("High temporal flickering — strong frame-to-frame spectral inconsistency")
+    elif flick > 0.4:
+        parts.append("Moderate temporal flickering detected")
     else:
-        parts.append("Head movement: high variance — unusually erratic motion")
+        parts.append("Temporal consistency: stable across frames")
+
+    stability = data.get("landmark_stability", 0.5)
+    if stability > 0.7:
+        parts.append("Low landmark stability — significant facial landmark jitter")
+    elif stability > 0.4:
+        parts.append("Moderate landmark jitter detected")
+    else:
+        parts.append("Landmark stability: consistent positioning")
 
     return ". ".join(parts) + "."
 
@@ -130,12 +135,10 @@ def fuse(
             "temporal": {
                 "score": round(temporal_score, 4),
                 "blink_score": round(temporal_data["blink_score"], 4),
-                "pose_score": round(temporal_data["pose_score"], 4),
                 "blink_count": temporal_data["blink_count"],
                 "blinks_per_min": temporal_data["blinks_per_min"],
-                "yaw_var": temporal_data["yaw_var"],
-                "pitch_var": temporal_data["pitch_var"],
-                "roll_var": temporal_data["roll_var"],
+                "flickering_score": round(temporal_data["flickering_score"], 4),
+                "landmark_stability": round(temporal_data["landmark_stability"], 4),
                 "explanation": _temporal_explanation(temporal_data),
             },
             "frequency": {

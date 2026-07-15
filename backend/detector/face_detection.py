@@ -5,9 +5,13 @@ import time
 from typing import NamedTuple
 
 from mediapipe.tasks.python.vision import FaceLandmarker, FaceLandmarkerOptions
-from mediapipe.tasks.python.vision.core.image import Image as MpImage, ImageFormat
 from mediapipe.tasks.python.core.base_options import BaseOptions
 from mediapipe.tasks.python.vision.core.vision_task_running_mode import VisionTaskRunningMode
+
+try:
+    from mediapipe.tasks.python.vision.core.image import Image as MpImage, ImageFormat
+except ImportError:
+    from mediapipe.python import Image as MpImage, ImageFormat
 
 from app.config import settings
 
@@ -22,7 +26,7 @@ def _get_landmarker():
     base = BaseOptions(model_asset_path=model_path)
     options = FaceLandmarkerOptions(
         base_options=base,
-        running_mode=VisionTaskRunningMode.VIDEO,
+        running_mode=VisionTaskRunningMode.IMAGE,
         num_faces=1,
         min_face_detection_confidence=0.5,
         min_face_presence_confidence=0.5,
@@ -43,8 +47,7 @@ def detect_faces(frame: cv2.Mat) -> list[FaceRegion]:
     h, w, _ = frame.shape
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     mp_img = MpImage(image_format=ImageFormat.SRGB, data=rgb)
-    timestamp_ms = int(time.time() * 1000)
-    result = landmarker.detect_for_video(mp_img, timestamp_ms)
+    result = landmarker.detect(mp_img)
 
     if not result.face_landmarks:
         return []

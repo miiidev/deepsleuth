@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.config import settings
-from app.routers import upload, status, download
+from app.routers import upload, status, download, history, metrics
 import os
 
 app = FastAPI(title="DeepSleuth")
@@ -18,6 +18,8 @@ app.add_middleware(
 app.include_router(upload.router, prefix="/api/v1")
 app.include_router(status.router, prefix="/api/v1")
 app.include_router(download.router, prefix="/api/v1")
+app.include_router(history.router, prefix="/api/v1")
+app.include_router(metrics.router, prefix="/api/v1")
 
 
 @app.get("/api/v1/health")

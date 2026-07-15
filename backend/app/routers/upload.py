@@ -48,7 +48,7 @@ async def upload_video(file: UploadFile = File(...)):
     with open(video_path, "wb") as f:
         f.write(content)
 
-    task_store.update(task_id, video_path=video_path, status="pending")
+    task_store.update(task_id, video_path=video_path, status="pending", filename=file.filename or "")
 
     thread = threading.Thread(
         target=run_pipeline,

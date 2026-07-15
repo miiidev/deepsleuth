@@ -11,6 +11,7 @@ class TaskState:
     status: str  # pending, processing, completed, failed
     progress: int = 0
     message: str = ""
+    filename: str = ""
     video_path: Optional[str] = None
     result_video_path: Optional[str] = None
     result_report_path: Optional[str] = None

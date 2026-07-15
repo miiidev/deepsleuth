@@ -24,12 +24,10 @@ export interface SpatialSignal {
 export interface TemporalSignal {
   score: number;
   blink_score: number;
-  pose_score: number;
   blink_count: number;
   blinks_per_min: number;
-  yaw_var: number;
-  pitch_var: number;
-  roll_var: number;
+  flickering_score: number;
+  landmark_stability: number;
   explanation: string;
 }
 
@@ -92,3 +90,73 @@ export function getOriginalVideoUrl(taskId: string): string {
 export function getReportUrl(taskId: string): string {
   return `/api/v1/result/${taskId}/report`;
 }
+
+export interface HistoryEntry {
+  id: string;
+  filename: string;
+  suspicion_level: string;
+  fused_score: number;
+  created_at: string;
+}
+
+export interface HistoryListResponse {
+  items: HistoryEntry[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+export async function getHistory(page: number = 1, perPage: number = 20): Promise<HistoryListResponse> {
+  const res = await client.get<HistoryListResponse>("/history", {
+    params: { page, per_page: perPage },
+  });
+  return res.data;
+}
+
+export async function deleteHistory(taskId: string): Promise<void> {
+  await client.delete(`/history/${taskId}`);
+}
+
+export interface HistoryDetail {
+  task_id: string;
+  filename: string;
+  status: string;
+  progress: number;
+  message: string;
+  video_path: string | null;
+  result_report_path: string | null;
+  error: string | null;
+  frame_scores: number[];
+  frame_face_data: FrameFaceData[];
+  analysis_result: AnalysisResult | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getHistoryDetail(taskId: string): Promise<HistoryDetail> {
+  const res = await client.get<HistoryDetail>(`/history/${taskId}`);
+  return res.data;
+}
+
+export interface BenchmarkMetrics {
+  version: string;
+  benchmark: {
+    dataset: string;
+    quality: string;
+    test_samples: number;
+    accuracy: number;
+    f1: number;
+    precision: number;
+    recall: number;
+    split_ratio: string;
+    model: string;
+    epochs: number;
+  };
+}
+
+export async function getMetrics(): Promise<BenchmarkMetrics> {
+  const res = await client.get<BenchmarkMetrics>("/metrics");
+  return res.data;
+}
+
+
