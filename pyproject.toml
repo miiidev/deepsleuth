@@ -9,6 +9,24 @@ description = "Deepfake detector — upload a video, get a heatmap overlay + rep
 readme = "README.md"
 requires-python = ">=3.11"
 
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "opencv-python",
+    "torch",
+    "torchvision",
+    "mediapipe",
+    "protobuf>=5.28",
+    "numpy",
+    "reportlab",
+    "python-multipart",
+    "Pillow",
+    "typer",
+    "timm",
+    "pydantic",
+    "onnxruntime",
+]
+
 [tool.setuptools.packages.find]
 include = ["backend*"]
 

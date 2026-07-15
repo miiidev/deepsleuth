@@ -10,3 +10,6 @@ reportlab
 python-multipart
 Pillow
 typer
+timm
+pydantic
+onnxruntime
