@@ -3,7 +3,7 @@ import numpy as np
 from app.config import settings
 from app.task_store import task_store
 from app.history_store import history_store
-from detector import extraction, face_detection, spatial_cnn, frequency, temporal, fusion, report
+from detector import extraction, face_detection, spatial_cnn, artifact, temporal, fusion, report
 
 
 def _progress_callback(task_id: str, pct: int, msg: str):
@@ -56,15 +56,15 @@ def run_pipeline(video_path: str, task_id: str, result_dir: str):
         all_faces_flat = [f for faces in cnn_face_crops for f in faces]
         spatial_score, per_face_scores, per_face_heatmaps, per_face_regions = spatial_cnn.run(all_faces_flat)
 
-        _progress_callback(task_id, 50, "Running frequency analysis...")
-        frequency_score, per_face_freq_scores = frequency.run(cnn_face_crops)
+        _progress_callback(task_id, 50, "Running artifact analysis...")
+        artifact_score, per_face_artifact_scores = artifact.run(cnn_face_crops)
 
         _progress_callback(task_id, 65, "Running temporal analysis...")
         temporal_data = temporal.run(frames, all_landmarks, fps=fps, skip=1)
 
         _progress_callback(task_id, 80, "Fusing scores...")
         merged_regions = _merge_region_scores(per_face_regions)
-        fusion_result = fusion.fuse(spatial_score, frequency_score, temporal_data, merged_regions)
+        fusion_result = fusion.fuse(spatial_score, artifact_score, temporal_data, merged_regions)
 
         _progress_callback(task_id, 85, "Building face data...")
         heatmap_idx = 0

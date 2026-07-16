@@ -66,6 +66,38 @@ def extract_source_id(video_stem: str):
     return video_stem
 
 
+def infer_method_from_path(filepath: str) -> str:
+    path = Path(filepath)
+    parts = path.parts
+    if "real" in parts:
+        return "real"
+    for method in MANIPULATION_METHODS:
+        if method in parts:
+            return method
+    return "unknown"
+
+
+def load_all_paths():
+    all_paths = []
+    all_labels = []
+
+    real_dir = DATA_DIR / "real"
+    if real_dir.exists():
+        for p in sorted(real_dir.glob("*.jpg")):
+            all_paths.append(str(p))
+            all_labels.append(0)
+
+    fake_dir = DATA_DIR / "fake"
+    if fake_dir.exists():
+        for method_dir in fake_dir.iterdir():
+            if method_dir.is_dir():
+                for p in sorted(method_dir.glob("*.jpg")):
+                    all_paths.append(str(p))
+                    all_labels.append(1)
+
+    return all_paths, all_labels
+
+
 def build_eval_transform():
     return transforms.Compose([
         transforms.Resize(int(IMG_SIZE * 1.1)),
@@ -205,12 +237,7 @@ def evaluate_by_method(model, paths, labels, transform, device):
     method_data["real"] = {"preds": [], "labels": []}
 
     for p, l in zip(paths, labels):
-        quality, method, video_stem, frame_num = parse_filename(p)
-
-        if l == 0:
-            method_key = "real"
-        else:
-            method_key = method if method else "unknown"
+        method_key = infer_method_from_path(p)
 
         if method_key not in method_data:
             method_data[method_key] = {"preds": [], "labels": []}
@@ -259,13 +286,11 @@ def main():
     model = model.to(device)
 
     print("Loading data...")
-    all_real = sorted((DATA_DIR / "real").glob("*.jpg"))
-    all_fake = sorted((DATA_DIR / "fake").glob("*.jpg"))
-    all_paths = [str(p) for p in all_real] + [str(p) for p in all_fake]
-    all_labels = [0] * len(all_real) + [1] * len(all_fake)
+    all_paths, all_labels = load_all_paths()
+    print(f"  Total: {len(all_paths)} frames ({sum(1 for l in all_labels if l == 0)} real, {sum(1 for l in all_labels if l == 1)} fake)")
 
     test_paths, test_labels = video_level_split(all_paths, all_labels)
-    print(f"Test set: {len(test_paths)} frames from {len(set(test_paths))} unique frames")
+    print(f"  Test set: {len(test_labels)} frames")
 
     transform = build_eval_transform()
     test_ds = FaceCropDataset(test_paths, test_labels, transform=transform)

@@ -2,7 +2,7 @@ import { getReportUrl } from "../api/client";
 
 interface Props {
   taskId: string;
-  scores: { spatial: number; frequency: number; temporal: number; fused: number };
+  scores: { spatial: number; artifact: number; temporal: number; fused: number };
 }
 
 export default function ReportPreview({ taskId, scores }: Props) {
@@ -12,7 +12,7 @@ export default function ReportPreview({ taskId, scores }: Props) {
       <div className="grid grid-cols-2 gap-4 text-sm">
         {([
           ["Spatial", scores.spatial],
-          ["Frequency", scores.frequency],
+          ["Artifact", scores.artifact],
           ["Temporal", scores.temporal],
           ["Fused", scores.fused],
         ] as const).map(([label, val]) => (

@@ -67,14 +67,14 @@ function VerdictCard({ level, summary }: { level: string; summary: string }) {
   );
 }
 
-function SignalOverviewCard({ spatial, temporal, frequency }: { spatial: number; temporal: number; frequency: number }) {
+function SignalOverviewCard({ spatial, temporal, artifact }: { spatial: number; temporal: number; artifact: number }) {
   return (
     <div className="cyber-card p-5 h-full">
       <div className="text-[11px] font-heading tracking-widest text-gray-500 mb-3">SIGNAL SCORES</div>
       <div className="space-y-3">
         <ScoreBar label="Spatial (XceptionNet)" value={spatial} />
         <ScoreBar label="Temporal (Blink+Flickering)" value={temporal} />
-        <ScoreBar label="Frequency (DCT)" value={frequency} />
+        <ScoreBar label="Artifact (Forensic)" value={artifact} />
       </div>
     </div>
   );
@@ -180,7 +180,7 @@ export default function Results() {
           <SignalOverviewCard
             spatial={signals.spatial.score}
             temporal={signals.temporal.score}
-            frequency={signals.frequency.score}
+            artifact={signals.artifact.score}
           />
         </div>
 
@@ -222,15 +222,15 @@ export default function Results() {
 
         <div className="lg:col-span-2">
           <div className="cyber-card p-5 h-full">
-            <div className="text-[11px] font-heading tracking-widest text-gray-500 mb-3">FREQUENCY (SPECTRAL)</div>
+            <div className="text-[11px] font-heading tracking-widest text-gray-500 mb-3">ARTIFACT (FORENSIC)</div>
             <div className="flex items-center gap-3 mb-3">
               <span className={`text-lg font-mono font-bold ${
-                signals.frequency.score >= 0.7 ? "text-[#FF3333]" : signals.frequency.score >= 0.4 ? "text-[#F59E0B]" : "text-[#00FF41]"
+                signals.artifact.score >= 0.7 ? "text-[#FF3333]" : signals.artifact.score >= 0.4 ? "text-[#F59E0B]" : "text-[#00FF41]"
               }`}>
-                {signals.frequency.score.toFixed(3)}
+                {signals.artifact.score.toFixed(3)}
               </span>
             </div>
-            <p className="text-xs font-mono text-gray-500 leading-relaxed">{signals.frequency.explanation}</p>
+            <p className="text-xs font-mono text-gray-500 leading-relaxed">{signals.artifact.explanation}</p>
           </div>
         </div>
 

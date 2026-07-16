@@ -37,17 +37,17 @@ export default function About() {
             <div className="bg-[#0A0A0A] rounded-lg p-4 border border-[#1F1F1F]">
               <div className="text-xs font-heading tracking-widest text-[#00FF41] mb-2">SPATIAL</div>
               <p className="text-xs font-mono text-gray-600">XceptionNet CNN with Grad-CAM heatmaps. Detects pixel-level manipulation artifacts in face regions.</p>
-              <div className="text-[10px] font-mono text-gray-700 mt-2">Weight: 40%</div>
+              <div className="text-[10px] font-mono text-gray-700 mt-2">Weight: 55%</div>
             </div>
             <div className="bg-[#0A0A0A] rounded-lg p-4 border border-[#1F1F1F]">
-              <div className="text-xs font-heading tracking-widest text-[#00FF41] mb-2">FREQUENCY</div>
-              <p className="text-xs font-mono text-gray-600">DCT spectral analysis. Catches frequency-domain inconsistencies from GAN/face-swap artifacts.</p>
-              <div className="text-[10px] font-mono text-gray-700 mt-2">Weight: 25%</div>
+              <div className="text-xs font-heading tracking-widest text-[#00FF41] mb-2">ARTIFACT</div>
+              <p className="text-xs font-mono text-gray-600">Forensic artifact detection. Analyzes skin texture consistency, boundary seams, and noise patterns across face regions.</p>
+              <div className="text-[10px] font-mono text-gray-700 mt-2">Weight: 15%</div>
             </div>
             <div className="bg-[#0A0A0A] rounded-lg p-4 border border-[#1F1F1F]">
               <div className="text-xs font-heading tracking-widest text-[#00FF41] mb-2">TEMPORAL</div>
               <p className="text-xs font-mono text-gray-600">Blink rate and head pose analysis. Deepfakes often have unnatural blink rates and erratic motion.</p>
-              <div className="text-[10px] font-mono text-gray-700 mt-2">Weight: 35%</div>
+              <div className="text-[10px] font-mono text-gray-700 mt-2">Weight: 30%</div>
             </div>
           </div>
           <p className="text-sm font-mono text-gray-400 leading-relaxed">

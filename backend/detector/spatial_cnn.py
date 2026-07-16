@@ -179,4 +179,8 @@ def run(faces: list[FaceRegion]) -> tuple[float, list[float], list[list[float]],
         regions_list.append(region_scores)
 
     mean_score = np.mean(scores) if scores else 0.5
+
+    if len(scores) < 5:
+        mean_score = mean_score + (0.5 - mean_score) * (1 - len(scores) / 5)
+
     return float(mean_score), scores, heatmaps, regions_list

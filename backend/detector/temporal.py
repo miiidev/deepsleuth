@@ -9,9 +9,6 @@ BLINK_MIN_DURATION_SEC = 0.05
 BLINK_MAX_DURATION_SEC = 0.5
 EXPECTED_BLINKS_PER_MINUTE = 17
 
-DCT_SIZE = 224
-HIGH_FREQ_CUTOFF = 32
-
 
 def _eye_aspect_ratio(eye_indices: list[int], landmarks: np.ndarray) -> float:
     p1 = landmarks[eye_indices[0]][:2]
@@ -94,35 +91,54 @@ def _extract_face_region(frame: np.ndarray, landmarks: np.ndarray) -> np.ndarray
     return crop
 
 
-def _dct_high_freq_vector(face: np.ndarray) -> np.ndarray | None:
-    gray = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
-    gray = cv2.resize(gray, (DCT_SIZE, DCT_SIZE)).astype(np.float32)
-    dct = cv2.dct(gray)
-    return dct[HIGH_FREQ_CUTOFF:, HIGH_FREQ_CUTOFF:].flatten()
-
-
-def _compute_flickering(frames: list, all_landmarks: list, skip: int, fps: float) -> float:
+def _compute_face_vectors(frames: list, all_landmarks: list) -> list[np.ndarray]:
     vectors = []
-
-    for i, (frame, landmarks) in enumerate(zip(frames, all_landmarks)):
+    for frame, landmarks in zip(frames, all_landmarks):
         if landmarks is None:
+            vectors.append(None)
             continue
         face = _extract_face_region(frame, landmarks)
         if face is None:
+            vectors.append(None)
             continue
-        vec = _dct_high_freq_vector(face)
-        if vec is not None:
-            vectors.append(vec)
+        rgb = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
+        resized = cv2.resize(rgb, (224, 224)).astype(np.float32) / 255.0
+        vectors.append(resized)
+    return vectors
 
-    if len(vectors) < 3:
-        return 0.5
 
-    vectors = np.array(vectors)
-    coeff_var = np.var(vectors, axis=0)
-    mean_var = float(np.mean(coeff_var))
+def _pair_diffs(vectors: list[np.ndarray], gap: int) -> list[float]:
+    diffs = []
+    for i in range(gap, len(vectors)):
+        if vectors[i] is None or vectors[i - gap] is None:
+            continue
+        diff = float(np.mean(np.abs(vectors[i] - vectors[i - gap])))
+        diffs.append(diff)
+    return diffs
 
-    score = np.clip(mean_var / 1500.0, 0.0, 1.0)
-    return float(score)
+
+def _compute_flickering(frames: list, all_landmarks: list, skip: int, fps: float) -> float:
+    vectors = _compute_face_vectors(frames, all_landmarks)
+
+    scales = [
+        (1, 0.5),
+        (3, 0.3),
+        (10, 0.2),
+    ]
+
+    total_score = 0.0
+    for gap, weight in scales:
+        diffs = _pair_diffs(vectors, gap)
+        if len(diffs) < 3:
+            total_score += weight * 0.5
+            continue
+        arr = np.array(diffs)
+        mean_d = float(np.mean(arr))
+        std_d = float(np.std(arr))
+        scale_score = mean_d * 5.0 + std_d * 10.0
+        total_score += weight * np.clip(scale_score, 0.0, 1.0)
+
+    return float(np.clip(total_score, 0.0, 1.0))
 
 
 def _compute_landmark_stability(all_landmarks: list) -> float:

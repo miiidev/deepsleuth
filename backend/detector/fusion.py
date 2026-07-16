@@ -1,7 +1,7 @@
 WEIGHTS = {
-    "spatial": 0.40,
-    "frequency": 0.25,
-    "temporal": 0.35,
+    "spatial": 0.55,
+    "artifact": 0.15,
+    "temporal": 0.30,
 }
 
 
@@ -70,26 +70,26 @@ def _temporal_explanation(data: dict) -> str:
     return ". ".join(parts) + "."
 
 
-def _frequency_explanation(score: float) -> str:
+def _artifact_explanation(score: float) -> str:
     if score < 0.3:
-        return "High-frequency energy ratio is within normal range."
+        return "No forensic artifacts detected — skin texture, boundaries, and noise patterns are consistent with authentic capture."
     if score < 0.5:
-        return "Slightly elevated high-frequency energy — minor spectral artifacts."
+        return "Minor texture or boundary anomalies detected — consistent with compression or encoding artifacts."
     if score < 0.7:
-        return "Elevated high-frequency energy ratio — spectral anomalies detected."
-    return "Strong high-frequency energy — significant spectral artifacts consistent with manipulation."
+        return "Moderate forensic artifacts — texture incongruence, boundary seams, or noise inconsistencies suggest possible manipulation."
+    return "Strong forensic artifacts — skin texture mismatches, boundary artifacts, and noise patterns are inconsistent with natural camera capture."
 
 
-def _summary(level: str, spatial: float, frequency: float, temporal: float) -> str:
+def _summary(level: str, spatial: float, artifact: float, temporal: float) -> str:
     if level == "none":
-        return "No significant anomalies detected across spatial, frequency, or temporal signals."
+        return "No significant anomalies detected across spatial, artifact, or temporal signals."
     if level == "low":
         return "Minor deviations detected. Results are consistent with authentic footage."
     signals = []
     if spatial >= 0.5:
         signals.append("spatial")
-    if frequency >= 0.5:
-        signals.append("frequency")
+    if artifact >= 0.5:
+        signals.append("artifact")
     if temporal >= 0.5:
         signals.append("temporal")
     if len(signals) == 0:
@@ -107,14 +107,14 @@ def _summary(level: str, spatial: float, frequency: float, temporal: float) -> s
 
 def fuse(
     spatial_score: float,
-    frequency_score: float,
+    artifact_score: float,
     temporal_data: dict,
     region_scores: dict[str, float] | None = None,
 ) -> dict:
     temporal_score = temporal_data["score"]
     fused = (
         spatial_score * WEIGHTS["spatial"]
-        + frequency_score * WEIGHTS["frequency"]
+        + artifact_score * WEIGHTS["artifact"]
         + temporal_score * WEIGHTS["temporal"]
     )
     level = _suspicion_level(fused)
@@ -122,10 +122,10 @@ def fuse(
     return {
         "fused_score": round(fused, 4),
         "spatial_score": round(spatial_score, 4),
-        "frequency_score": round(frequency_score, 4),
+        "artifact_score": round(artifact_score, 4),
         "temporal_score": round(temporal_score, 4),
         "suspicion_level": level,
-        "summary": _summary(level, spatial_score, frequency_score, temporal_score),
+        "summary": _summary(level, spatial_score, artifact_score, temporal_score),
         "signals": {
             "spatial": {
                 "score": round(spatial_score, 4),
@@ -141,9 +141,9 @@ def fuse(
                 "landmark_stability": round(temporal_data["landmark_stability"], 4),
                 "explanation": _temporal_explanation(temporal_data),
             },
-            "frequency": {
-                "score": round(frequency_score, 4),
-                "explanation": _frequency_explanation(frequency_score),
+            "artifact": {
+                "score": round(artifact_score, 4),
+                "explanation": _artifact_explanation(artifact_score),
             },
         },
     }

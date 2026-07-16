@@ -33,6 +33,17 @@ GRAD_CLIP = 1.0
 MANIPULATION_METHODS = ["Deepfakes", "Face2Face", "FaceSwap", "NeuralTextures"]
 
 
+def infer_method_from_path(filepath: str) -> str:
+    path = Path(filepath)
+    parts = path.parts
+    if "real" in parts:
+        return "real"
+    for method in MANIPULATION_METHODS:
+        if method in parts:
+            return method
+    return "unknown"
+
+
 def set_seed(seed: int):
     random.seed(seed)
     np.random.seed(seed)
@@ -271,15 +282,9 @@ def evaluate_per_method(model, paths, labels, transform, device):
     method_preds["real"] = {"preds": [], "labels": []}
 
     model.eval()
-    criterion = nn.CrossEntropyLoss(label_smoothing=LABEL_SMOOTHING)
 
     for p, l in zip(paths, labels):
-        quality, method, video_stem, frame_num = parse_filename(p)
-
-        if l == 0:
-            method_key = "real"
-        else:
-            method_key = method if method else "unknown"
+        method_key = infer_method_from_path(p)
 
         if method_key not in method_preds:
             method_preds[method_key] = {"preds": [], "labels": []}
@@ -318,7 +323,12 @@ def train():
 
     print("Building splits...")
     all_real = sorted((DATA_DIR / "real").glob("*.jpg"))
-    all_fake = sorted((DATA_DIR / "fake").glob("*.jpg"))
+    all_fake = []
+    fake_dir = DATA_DIR / "fake"
+    if fake_dir.exists():
+        for method_dir in fake_dir.iterdir():
+            if method_dir.is_dir():
+                all_fake.extend(sorted(method_dir.glob("*.jpg")))
 
     all_paths = [str(p) for p in all_real] + [str(p) for p in all_fake]
     all_labels = [0] * len(all_real) + [1] * len(all_fake)

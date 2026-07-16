@@ -61,7 +61,7 @@ export default function Methodology() {
       <Section title="SPATIAL ANALYSIS — XCEPTIONNET CNN">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-heading tracking-widest text-[#00FF41] bg-[#00FF4110] px-2 py-0.5 rounded">WEIGHT: 40%</span>
+            <span className="text-[10px] font-heading tracking-widest text-[#00FF41] bg-[#00FF4110] px-2 py-0.5 rounded">WEIGHT: 55%</span>
           </div>
           <h3 className="text-xs font-heading tracking-widest text-gray-400">WHAT IT DOES</h3>
           <p className="text-xs font-mono text-gray-500 leading-relaxed">
@@ -82,29 +82,29 @@ export default function Methodology() {
         </div>
       </Section>
 
-      {/* Frequency Analysis */}
-      <Section title="FREQUENCY ANALYSIS — MULTI-FEATURE SPECTRAL">
+      {/* Artifact Analysis */}
+      <Section title="ARTIFACT ANALYSIS — FORENSIC DETECTION">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-heading tracking-widest text-[#00FF41] bg-[#00FF4110] px-2 py-0.5 rounded">WEIGHT: 25%</span>
+            <span className="text-[10px] font-heading tracking-widest text-[#00FF41] bg-[#00FF4110] px-2 py-0.5 rounded">WEIGHT: 15%</span>
           </div>
           <h3 className="text-xs font-heading tracking-widest text-gray-400">WHAT IT DOES</h3>
           <p className="text-xs font-mono text-gray-500 leading-relaxed">
-            Analyzes three independent frequency-domain features of face images to detect spectral anomalies characteristic of synthetic generation.
+            Analyzes three forensic sub-signals — skin texture incongruence, boundary and highlight anomalies, and noise pattern consistency — to detect manipulation artifacts invisible to the naked eye.
           </p>
           <h3 className="text-xs font-heading tracking-widest text-gray-400">HOW IT WORKS</h3>
           <p className="text-xs font-mono text-gray-500 leading-relaxed">
-            <strong>DCT Energy Ratio:</strong> A 2D Discrete Cosine Transform is applied to the grayscale face (224x224). Energy (sum of squared coefficients) is split into frequency bands. The ratio of high-frequency energy to total energy is computed — natural faces have a smooth spectral rolloff, while deepfakes exhibit unnatural high-frequency content.
+            <strong>Cross-Region Skin Texture:</strong> Divides the face into cheeks and forehead regions using MediaPipe landmarks. Laplacian variance measures surface roughness in each region. Real faces show consistent texture aging; deepfakes exhibit mismatched smoothness/roughness patterns between regions.
           </p>
           <p className="text-xs font-mono text-gray-500 leading-relaxed">
-            <strong>Spectral Flatness (Wiener Entropy):</strong> Measures how flat or spiky the frequency spectrum is. Natural images have structured, non-flat spectra. GAN-generated faces often produce flatter or more periodic spectral profiles.
+            <strong>Boundary & Highlight Analysis:</strong> Sobel gradients along the jawline detect manipulation seams — sharp gradient discontinuities at face boundaries indicate face-swap boundaries. Specular highlight analysis in the eye region checks whether glare physics are consistent with natural scene lighting.
           </p>
           <p className="text-xs font-mono text-gray-500 leading-relaxed">
-            <strong>Laplacian Variance:</strong> Applies a Laplacian edge detector and measures the variance of the response. This captures sharpness characteristics — deepfakes may show unnatural blur or edge patterns compared to real camera-captured faces.
+            <strong>Noise Pattern Consistency:</strong> A high-pass residual is extracted by subtracting a Gaussian-blurred image. The residual is divided into 16×16 blocks, and the coefficient of variation of block-wise variances measures noise uniformity. Natural camera noise is spatially uniform; GAN-generated faces show non-uniform noise distributions.
           </p>
           <h3 className="text-xs font-heading tracking-widest text-gray-400">WHAT IT CATCHES</h3>
           <p className="text-xs font-mono text-gray-500 leading-relaxed">
-            GAN-generated faces introduce periodic spectral artifacts and unnatural frequency distributions. Face-swap boundaries create frequency discontinuities. The multi-feature approach reduces false positives from compression or noise by cross-referencing independent spectral indicators.
+            Face-swap seams at jawline boundaries, mismatched skin texture between composited regions, unnatural specular highlights that violate physical lighting constraints, and spatially varying noise patterns characteristic of generative adversarial networks.
           </p>
         </div>
       </Section>
@@ -144,7 +144,7 @@ export default function Methodology() {
             The three signal scores (each 0.0 to 1.0) are combined using a weighted sum:
           </p>
           <div className="bg-[#0A0A0A] rounded-lg p-4 border border-[#1F1F1F] font-mono text-xs text-gray-400">
-            fused_score = (spatial × 0.40) + (frequency × 0.25) + (temporal × 0.35)
+            fused_score = (spatial × 0.55) + (artifact × 0.15) + (temporal × 0.30)
           </div>
           <h3 className="text-xs font-heading tracking-widest text-gray-400">SUSPICION LEVELS</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">

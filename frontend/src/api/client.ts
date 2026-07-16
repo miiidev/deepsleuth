@@ -31,7 +31,7 @@ export interface TemporalSignal {
   explanation: string;
 }
 
-export interface FrequencySignal {
+export interface ArtifactSignal {
   score: number;
   explanation: string;
 }
@@ -39,14 +39,14 @@ export interface FrequencySignal {
 export interface AnalysisResult {
   fused_score: number;
   spatial_score: number;
-  frequency_score: number;
+  artifact_score: number;
   temporal_score: number;
   suspicion_level: string;
   summary: string;
   signals: {
     spatial: SpatialSignal;
     temporal: TemporalSignal;
-    frequency: FrequencySignal;
+    artifact: ArtifactSignal;
   };
 }
 

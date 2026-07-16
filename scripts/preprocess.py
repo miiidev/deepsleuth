@@ -1,11 +1,13 @@
 import cv2
 import os
 import sys
+import time
+import argparse
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
-from detector.face_detection import detect_faces
 from detector.extraction import extract_frames
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,6 +27,71 @@ TARGET_SIZE = 299
 QUALITY_LEVELS = ["c23"]
 
 
+def _process_single_video(args):
+    vpath, out_dir, quality, stem = args
+    from detector.face_detection import detect_faces
+
+    frames, fps = extract_frames(str(vpath), skip=SKIP_FRAME)
+    count = 0
+    for i, frame in enumerate(frames):
+        faces = detect_faces(frame)
+        if not faces:
+            continue
+        face = faces[0].crop
+        face = cv2.resize(face, (TARGET_SIZE, TARGET_SIZE))
+        fname = f"{quality}_{stem}_f{i}.jpg"
+        cv2.imwrite(str(out_dir / fname), face)
+        count += 1
+
+    return count
+
+
+def process_videos(video_dir: Path, label: str, quality: str, method: str = "",
+                   limit: int = 0, workers: int = 1):
+    if method:
+        out_dir = DATA_OUT / label / method
+    else:
+        out_dir = DATA_OUT / label
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    videos = sorted(video_dir.glob("*.mp4"))
+    if limit:
+        videos = videos[:limit]
+
+    tasks = [(v, out_dir, quality, v.stem) for v in videos]
+
+    count = 0
+    t0 = time.time()
+
+    if workers <= 1:
+        for task in tasks:
+            count += _process_single_video(task)
+            elapsed = time.time() - t0
+            rate = count / elapsed if elapsed > 0 else 0
+            print(f"\r  [{label}/{method or 'all'}] {count} crops ({rate:.0f}/s)", end="", flush=True)
+    else:
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(_process_single_video, t): t for t in tasks}
+            done = 0
+            for future in as_completed(futures):
+                try:
+                    c = future.result()
+                    count += c
+                except Exception as e:
+                    vpath = futures[future][0]
+                    print(f"\n  ERROR processing {vpath.name}: {e}")
+                done += 1
+                elapsed = time.time() - t0
+                rate = count / elapsed if elapsed > 0 else 0
+                print(f"\r  [{label}/{method or 'all'}] {done}/{len(tasks)} videos, {count} crops ({rate:.0f}/s)   ",
+                      end="", flush=True)
+
+    elapsed = time.time() - t0
+    tag = f"{label}/{method}" if method else label
+    print(f"\n  [{tag}] Done — {count} crops from {len(videos)} videos in {elapsed:.1f}s")
+    return count
+
+
 def find_quality_dirs():
     available = []
     for q in QUALITY_LEVELS:
@@ -34,44 +101,23 @@ def find_quality_dirs():
     return available
 
 
-def process_videos(video_dir: Path, label: str, quality: str, method: str = "real", limit: int = 0):
-    out_dir = DATA_OUT / label
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    videos = sorted(video_dir.glob("*.mp4"))
-    if limit:
-        videos = videos[:limit]
-
-    count = 0
-    for vpath in videos:
-        stem = vpath.stem
-        frames, fps = extract_frames(str(vpath), skip=SKIP_FRAME)
-        for i, frame in enumerate(frames):
-            faces = detect_faces(frame)
-            if not faces:
-                continue
-            face = faces[0].crop
-            face = cv2.resize(face, (TARGET_SIZE, TARGET_SIZE))
-            fname = f"{quality}_{method}_{stem}_f{i}.jpg"
-            cv2.imwrite(str(out_dir / fname), face)
-            count += 1
-
-        if (count + 1) % 500 == 0:
-            print(f"  [{label}] {count} crops so far...")
-
-    print(f"  [{label}] Done — {count} crops from {len(videos)} videos")
-    return count
-
-
 def main():
+    parser = argparse.ArgumentParser(description="Preprocess FaceForensics++ videos")
+    parser.add_argument("-j", "--workers", type=int, default=4,
+                        help="Number of parallel workers (default: 4)")
+    parser.add_argument("--limit", type=int, default=0,
+                        help="Limit videos per source (0 = all)")
+    args = parser.parse_args()
+
     available = find_quality_dirs()
     if not available:
         print("No quality directories found under data/raw/")
-        print("Expected: data/raw/original_sequences/youtube/c40/videos/")
+        print("Expected: data/raw/original_sequences/youtube/c23/videos/")
         sys.exit(1)
 
     print("=== Preprocessing FaceForensics++ ===")
     print(f"Quality levels: {', '.join(available)}")
+    print(f"Workers: {args.workers}")
     print()
 
     total_real = 0
@@ -83,7 +129,7 @@ def main():
 
         real_dir = DATA_RAW / "original_sequences" / "youtube" / quality / "videos"
         print(f"Processing REAL videos ({quality})...")
-        real_count = process_videos(real_dir, "real", quality, method="real")
+        real_count = process_videos(real_dir, "real", quality, workers=args.workers, limit=args.limit)
         total_real += real_count
 
         print()
@@ -93,7 +139,8 @@ def main():
                 print(f"  Skipping {src}/{quality} (not found)")
                 continue
             print(f"Processing FAKE ({src}/{quality})...")
-            cnt = process_videos(fake_dir, "fake", quality, method=src)
+            cnt = process_videos(fake_dir, "fake", quality, method=src,
+                                 workers=args.workers, limit=args.limit)
             total_fake += cnt
 
         print()
