@@ -27,7 +27,7 @@ def _load_metrics() -> dict:
         data = json.loads(SPLITS_PATH.read_text())
         benchmark = {
             "dataset": "FaceForensics++",
-            "quality": "c40",
+            "quality": "c23",
             "test_samples": data.get("test_real", 0) + data.get("test_fake", 0),
             "accuracy": round(data.get("test_accuracy", 0), 4),
             "f1": round(data.get("test_f1", 0), 4),

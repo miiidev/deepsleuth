@@ -179,8 +179,8 @@ export default function Methodology() {
           </p>
           <div className="space-y-0">
             <MetricRow label="Dataset" value={metrics?.benchmark.dataset ?? "FaceForensics++"} />
-            <MetricRow label="Quality" value={metrics?.benchmark.quality ?? "c40"} />
-            <MetricRow label="Test Samples" value={metrics?.benchmark.test_samples.toLocaleString() ?? "3,809"} />
+            <MetricRow label="Quality" value={metrics?.benchmark.quality ?? "c23"} />
+            <MetricRow label="Test Samples" value={metrics?.benchmark.test_samples.toLocaleString() ?? "7,125"} />
             <MetricRow label="Model" value={metrics?.benchmark.model ?? "XceptionNet"} />
             <MetricRow label="Training Epochs" value={String(metrics?.benchmark.epochs ?? 40)} />
             <MetricRow label="Split Ratio" value={metrics?.benchmark.split_ratio ?? "80/10/10"} />
@@ -188,25 +188,25 @@ export default function Methodology() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="benchmark-badge">
               <div className="text-2xl font-heading text-[#00FF41] neon-glow-sm">
-                {metrics ? (metrics.benchmark.accuracy * 100).toFixed(1) : "92.6"}%
+                {metrics ? (metrics.benchmark.accuracy * 100).toFixed(1) : "99.1"}%
               </div>
               <div className="text-[10px] font-heading tracking-widest text-gray-500 mt-1">ACCURACY</div>
             </div>
             <div className="benchmark-badge">
               <div className="text-2xl font-heading text-[#00FF41] neon-glow-sm">
-                {metrics ? (metrics.benchmark.f1 * 100).toFixed(1) : "93.2"}%
+                {metrics ? (metrics.benchmark.f1 * 100).toFixed(1) : "99.4"}%
               </div>
               <div className="text-[10px] font-heading tracking-widest text-gray-500 mt-1">F1 SCORE</div>
             </div>
             <div className="benchmark-badge">
               <div className="text-2xl font-heading text-[#00FF41] neon-glow-sm">
-                {metrics ? (metrics.benchmark.precision * 100).toFixed(1) : "92.8"}%
+                {metrics ? (metrics.benchmark.precision * 100).toFixed(1) : "99.7"}%
               </div>
               <div className="text-[10px] font-heading tracking-widest text-gray-500 mt-1">PRECISION</div>
             </div>
             <div className="benchmark-badge">
               <div className="text-2xl font-heading text-[#00FF41] neon-glow-sm">
-                {metrics ? (metrics.benchmark.recall * 100).toFixed(1) : "93.6"}%
+                {metrics ? (metrics.benchmark.recall * 100).toFixed(1) : "99.2"}%
               </div>
               <div className="text-[10px] font-heading tracking-widest text-gray-500 mt-1">RECALL</div>
             </div>

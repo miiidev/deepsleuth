@@ -11,7 +11,7 @@ export default function Landing() {
     getMetrics().then(setMetrics).catch(() => {});
   }, []);
 
-  const accuracyPct = metrics ? (metrics.benchmark.accuracy * 100).toFixed(1) : "92.6";
+  const accuracyPct = metrics ? (metrics.benchmark.accuracy * 100).toFixed(1) : "99.1";
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-16">
@@ -63,7 +63,7 @@ export default function Landing() {
             <div className="text-3xl font-heading text-[#00FF41] neon-glow mb-1">{accuracyPct}%</div>
             <div className="text-[10px] font-heading tracking-widest text-gray-500 mb-2">ACCURACY</div>
             <p className="text-xs font-mono text-gray-600">
-              Tested on {metrics?.benchmark.test_samples.toLocaleString() ?? "3,809"} samples from {metrics?.benchmark.dataset ?? "FaceForensics++"}
+              Tested on {metrics?.benchmark.test_samples.toLocaleString() ?? "7,125"} samples from {metrics?.benchmark.dataset ?? "FaceForensics++"}
             </p>
           </div>
           <div className="benchmark-badge">
@@ -73,7 +73,7 @@ export default function Landing() {
               <BarChart3 className="w-6 h-6 text-[#00FF41]" />
             </div>
             <div className="text-[10px] font-heading tracking-widest text-gray-500 mb-2">3 INDEPENDENT SIGNALS</div>
-            <p className="text-xs font-mono text-gray-600">Spatial CNN, frequency analysis, and temporal behavior — each weighted and explained.</p>
+              <p className="text-xs font-mono text-gray-600">Spatial CNN, artifact detection, and temporal behavior — each weighted and explained.</p>
           </div>
           <div className="benchmark-badge">
             <div className="flex justify-center gap-3 mb-2">
