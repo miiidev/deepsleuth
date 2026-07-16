@@ -65,11 +65,10 @@ export default function Upload() {
         onDragLeave={() => setDrag(false)}
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-12 cursor-pointer transition-all duration-200 ${
-          drag
+        className={`border-2 border-dashed rounded-xl p-12 cursor-pointer transition-all duration-200 ${drag
             ? "border-[#00FF41] bg-[#00FF41]/5 neon-border"
             : "border-gray-700 hover:border-[#00FF41]"
-        }`}
+          }`}
       >
         <input
           ref={inputRef}
@@ -101,13 +100,6 @@ export default function Upload() {
         className="mt-6 w-full py-3 rounded-lg font-mono text-sm tracking-widest text-black bg-[#00FF41] hover:bg-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 neon-border font-bold"
       >
         {loading ? "UPLOADING..." : "&gt;&gt; ANALYZE VIDEO"}
-      </button>
-
-      <button
-        onClick={() => navigate("/history")}
-        className="mt-3 w-full py-3 rounded-lg font-mono text-xs tracking-widest text-gray-500 border border-gray-700 hover:text-[#00FF41] hover:border-[#00FF41] transition-all duration-200"
-      >
-        &gt;&gt; VIEW HISTORY
       </button>
     </div>
   );

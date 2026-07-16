@@ -24,20 +24,25 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Backend uploads / results
+# Backend runtime data
 backend/uploads/
 backend/results/
+backend/history/*.json
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
 
 # Data (raw video datasets + processed face crops)
 data/raw/
 data/processed/images/
 data/processed/haarcascade_frontalface_default.xml
 
+# Generated data files
+data/splits/*.json
+
 # Model weights (user must train or download)
 weights/
-
-# Training artifacts
-data/splits/splits.json
 
 # Logs
 *.log
