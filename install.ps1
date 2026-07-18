@@ -7,17 +7,15 @@
     desktop shortcut.
 #>
 
-$ErrorActionPreference = 'Stop'
-$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-
 $ErrorActionPreference = 'Continue'
+$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 function Write-Step {
     param([string]$Message)
     Write-Host "`n==> $Message" -ForegroundColor Cyan
 }
 
-function Write-Error {
+function Write-StepError {
     param([string]$Message)
     Write-Host "ERROR: $Message" -ForegroundColor Red
 }
@@ -40,7 +38,7 @@ foreach ($prog in $pythonCandidates) {
 }
 
 if (-not $python) {
-    Write-Error "Python 3.11+ is required but was not found."
+    Write-StepError "Python 3.11+ is required but was not found."
     Write-Host ""
     Write-Host "Install Python 3.11 from the Microsoft Store or run:"
     Write-Host "  winget install Python.Python.3.11"
@@ -56,12 +54,12 @@ if ($versionOutput -match 'Python (\d+)\.(\d+)') {
     $major = [int]::Parse($matches[1])
     $minor = [int]::Parse($matches[2])
     if ($major -lt 3 -or ($major -eq 3 -and $minor -lt 11)) {
-        Write-Error "Python 3.11+ required, found $major.$minor. Please upgrade."
+        Write-StepError "Python 3.11+ required, found $major.$minor. Please upgrade."
         Read-Host "Press Enter to exit"
         exit 1
     }
 } else {
-    Write-Error "Could not parse Python version: $versionOutput"
+    Write-StepError "Could not parse Python version: $versionOutput"
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -76,7 +74,7 @@ $venvPath = Join-Path $repoRoot ".venv"
 if (-not (Test-Path $venvPath)) {
     & $python -m venv $venvPath
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to create virtual environment."
+        Write-StepError "Failed to create virtual environment."
         Read-Host "Press Enter to exit"
         exit 1
     }
@@ -86,14 +84,13 @@ if (-not (Test-Path $venvPath)) {
 }
 
 $pip = Join-Path $venvPath "Scripts" "pip.exe"
-$pythonVenv = Join-Path $venvPath "Scripts" "python.exe"
 
 # --- Step 3: Install dependencies ---
 Write-Step "Installing Python dependencies (this may take a few minutes)"
 
 & $pip install -e "$repoRoot"
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "pip install failed. Check the output above for details."
+    Write-StepError "pip install failed. Check the output above for details."
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -122,7 +119,7 @@ if ($env:DEEPSLEUTH_WEIGHTS_URL) {
         $baseUrl = "https://github.com/$owner/$repo/releases/download/$tag"
         Write-Success "  Found latest release: $tag"
     } catch {
-        Write-Error "  Could not fetch latest release info: $_"
+        Write-StepError "  Could not fetch latest release info: $_"
         Write-Host "  Falling back to 'latest' tag..."
         $baseUrl = "https://github.com/$owner/$repo/releases/latest/download"
     }
@@ -146,7 +143,7 @@ foreach ($wf in $weightFiles) {
         Invoke-WebRequest -Uri $url -OutFile $destPath -ErrorAction Stop
         Write-Success "  Saved to weights/$($wf.Name)"
     } catch {
-        Write-Error "  Failed to download $($wf.Name): $_"
+        Write-StepError "  Failed to download $($wf.Name): $_"
     }
 }
 
@@ -164,7 +161,7 @@ foreach ($check in $checks) {
     if (Test-Path $fullPath) {
         Write-Success "  [OK] $($check.Label)"
     } else {
-        Write-Error "  [FAIL] $($check.Label) not found at $fullPath"
+        Write-StepError "  [FAIL] $($check.Label) not found at $fullPath"
         $allOk = $false
     }
 }
@@ -180,13 +177,13 @@ foreach ($check in $weightChecks) {
     if (Test-Path $fullPath) {
         Write-Success "  [OK] $($check.Label)"
     } else {
-        Write-Error "  [FAIL] $($check.Label) not found at $fullPath"
+        Write-StepError "  [FAIL] $($check.Label) not found at $fullPath"
         $allOk = $false
     }
 }
 
 if (-not $allOk) {
-    Write-Error "Some components are missing. Check the errors above."
+    Write-StepError "Some components are missing. Check the errors above."
     Read-Host "Press Enter to exit"
     exit 1
 }
@@ -204,7 +201,7 @@ if ($createShortcut -ne 'n' -and $createShortcut -ne 'N') {
     $wshShell = New-Object -ComObject WScript.Shell
     $shortcut = $wshShell.CreateShortcut($shortcutPath)
     $shortcut.TargetPath = "powershell.exe"
-    $shortcut.Arguments = "-NoExit -Command `"cd '$repoRoot' && .\.venv\Scripts\python -m backend.cli`""
+    $shortcut.Arguments = "-NoExit -Command `"cd '$repoRoot'; .\.venv\Scripts\python -m backend.cli`""
     $shortcut.WorkingDirectory = $repoRoot
     $shortcut.Description = "DeepSleuth - Local deepfake video detection"
     $shortcut.Save()
