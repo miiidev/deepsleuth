@@ -1,5 +1,7 @@
 # DeepSleuth
 
+[![Download Installer](https://img.shields.io/badge/Download-Installer-blue?logo=github)](https://github.com/miiidev/deepsleuth/releases/latest)
+
 Local, offline deepfake video detection tool. Upload a video, get a forensic analysis with heatmap overlays, per-region breakdowns, and a downloadable PDF report.
 
 No cloud upload. No black box. Every signal and threshold is disclosed.
@@ -40,6 +42,18 @@ install.bat
 ```
 
 The script handles everything: virtual environment, dependencies (CUDA-aware PyTorch), model weights, and frontend build.
+
+**Standalone download (no clone needed):**
+```bash
+# macOS / Linux
+curl -LO https://github.com/miiidev/deepsleuth/releases/latest/download/install.sh
+chmod +x install.sh
+./install.sh
+
+# Windows (PowerShell)
+curl -LO https://github.com/miiidev/deepsleuth/releases/latest/download/install.bat
+install.bat
+```
 
 ### Running
 
