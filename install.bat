@@ -60,10 +60,16 @@ exit /b 1
 :check_node
 where node >nul 2>nul
 if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Node.js 18+ not found. Install from https://nodejs.org
+    echo [ERROR] Node.js not found. Install from https://nodejs.org
     exit /b 1
 )
 for /f "tokens=*" %%i in ('node --version') do set NODE_VER=%%i
+for /f "tokens=1 delims=v" %%i in ("%NODE_VER%") do set NODE_MAJOR=%%i
+for /f "tokens=1 delims=." %%i in ("%NODE_MAJOR%") do set NODE_MAJOR=%%i
+if %NODE_MAJOR% lss %MIN_NODE% (
+    echo [ERROR] Node.js 18+ required (found %NODE_VER%)
+    exit /b 1
+)
 echo   Node: %NODE_VER%
 exit /b 0
 
@@ -137,7 +143,7 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 tar -xf "%TEMP%\weights.zip" -C "%WEIGHTS_DIR%" 2>nul || (
-    :: fallback if tar not available ??? use PowerShell
+    rem fallback if tar not available — use PowerShell
     powershell -Command "Expand-Archive -Path '%TEMP%\weights.zip' -DestinationPath '%WEIGHTS_DIR%' -Force"
 )
 del "%TEMP%\weights.zip" 2>nul
