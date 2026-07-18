@@ -118,7 +118,8 @@ step4_weights() {
     fi
     mkdir -p "$WEIGHTS_DIR"
     local tmpzip
-    tmpzip=$(mktemp)
+    tmpzip=$(mktemp weights.XXXXXXXXXX)
+    trap 'rm -f "$tmpzip"' EXIT
     echo "  Downloading from $WEIGHTS_URL"
     curl -L --progress-bar -o "$tmpzip" "$WEIGHTS_URL"
     unzip -o -q "$tmpzip" -d "$WEIGHTS_DIR"
