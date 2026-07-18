@@ -101,7 +101,13 @@ Write-Step "Downloading model weights"
 
 $weightsDir = Join-Path $repoRoot "weights"
 if (-not (Test-Path $weightsDir)) {
-    New-Item -ItemType Directory -Path $weightsDir -Force | Out-Null
+    try {
+        New-Item -ItemType Directory -Path $weightsDir -Force -ErrorAction Stop | Out-Null
+    } catch {
+        Write-StepError "  Failed to create weights directory: $_"
+        Read-Host "Press Enter to exit"
+        exit 1
+    }
 }
 
 # Resolve the latest release tag from GitHub API
@@ -112,9 +118,13 @@ if ($env:DEEPSLEUTH_WEIGHTS_URL) {
     $baseUrl = $env:DEEPSLEUTH_WEIGHTS_URL
 } else {
     Write-Host "  Looking up latest release..."
+    $apiHeaders = @{}
+    if ($env:GITHUB_TOKEN) {
+        $apiHeaders['Authorization'] = "Bearer $env:GITHUB_TOKEN"
+    }
     try {
         $apiUrl = "https://api.github.com/repos/$owner/$repo/releases/latest"
-        $release = Invoke-RestMethod -Uri $apiUrl -ErrorAction Stop
+        $release = Invoke-RestMethod -Uri $apiUrl -Headers $apiHeaders -ErrorAction Stop
         $tag = $release.tag_name
         $baseUrl = "https://github.com/$owner/$repo/releases/download/$tag"
         Write-Success "  Found latest release: $tag"
@@ -139,11 +149,32 @@ foreach ($wf in $weightFiles) {
 
     $url = "$baseUrl/$($wf.Name)"
     Write-Host "  Downloading $($wf.Description)..."
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $destPath -ErrorAction Stop
-        Write-Success "  Saved to weights/$($wf.Name)"
-    } catch {
-        Write-StepError "  Failed to download $($wf.Name): $_"
+    $attempt = 0
+    $downloaded = $false
+    do {
+        $attempt++
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $destPath -ErrorAction Stop
+            if ((Get-Item $destPath).Length -gt 0) {
+                $downloaded = $true
+                Write-Success "  Saved to weights/$($wf.Name)"
+            } else {
+                Remove-Item $destPath -Force -ErrorAction SilentlyContinue
+                Write-StepError "  Downloaded $($wf.Name) is empty (attempt $attempt)"
+            }
+        } catch {
+            Write-StepError "  Failed to download $($wf.Name) (attempt $attempt): $_"
+        }
+        if (-not $downloaded -and $attempt -lt 3) {
+            Write-Host "  Retrying in 2 seconds..."
+            Start-Sleep -Seconds 2
+        }
+    } while (-not $downloaded -and $attempt -lt 3)
+
+    if (-not $downloaded) {
+        Write-StepError "  Could not download $($wf.Name) after 3 attempts."
+        Read-Host "Press Enter to exit"
+        exit 1
     }
 }
 
