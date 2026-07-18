@@ -46,3 +46,6 @@ weights/
 
 # Logs
 *.log
+
+# Release archives
+*.zip
