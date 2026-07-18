@@ -16,13 +16,28 @@ Scores are fused into a weighted composite. No single signal is definitive — t
 
 ## Quick Start
 
-### Prerequisites
+### Windows (Recommended)
+
+1. Go to the [Releases page](https://github.com/miiidev/deepsleuth/releases)
+2. Download the latest `deepsleuth-v*.zip`
+3. Extract the zip anywhere (e.g. `C:\Users\You\DeepSleuth`)
+4. Double-click `install.ps1` — it will:
+   - Check for Python 3.11+ (prompt to install if missing)
+   - Create a virtual environment and install dependencies
+   - Download the required model weights
+   - Optionally create a desktop shortcut
+
+That's it. When the script finishes, run DeepSleuth from the desktop shortcut or terminal:
+```bash
+.\.venv\Scripts\deepsleuth
+```
+
+### Prerequisites (all platforms)
 
 - Python 3.11+
-- Node.js 18+ (for frontend build)
 - CUDA-capable GPU recommended (CPU inference works but is slower)
 
-### Installation
+### Manual Installation (alternative)
 
 ```bash
 git clone https://github.com/miiidev/deepsleuth.git
@@ -37,11 +52,10 @@ pip install -e .
 # Download model weights (required)
 # Place xception_best.pth and face_landmarker.task in weights/
 
-# Frontend
-cd frontend
-npm install
-npm run build
-cd ..
+# Frontend (only needed if developing the UI)
+# cd frontend
+# npm install
+# npm run build
 ```
 
 ### Running
