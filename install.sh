@@ -18,14 +18,19 @@ info() { echo -e "${GREEN}[$1/6]${NC} $2"; }
 warn() { echo -e "${YELLOW}[!]${NC} $1"; }
 
 ver_ge() {
-    [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" = "$2" ]
+    local IFS=.; read -ra v1 <<<"$1"; read -ra v2 <<<"$2"
+    for i in 0 1 2; do
+        [ "${v1[i]:-0}" -gt "${v2[i]:-0}" ] && return 0
+        [ "${v1[i]:-0}" -lt "${v2[i]:-0}" ] && return 1
+    done
+    return 0
 }
 
 check_python() {
     local cmd py_ver
     for cmd in python3 python; do
         if command -v "$cmd" &>/dev/null; then
-            py_ver="$($cmd --version 2>&1 | grep -oP '\d+\.\d+')"
+            py_ver="$($cmd --version 2>&1 | grep -oE '[0-9]+\.[0-9]+')"
             if ver_ge "$py_ver" "$MIN_PYTHON"; then
                 PYTHON="$cmd"
                 echo "$py_ver"
@@ -39,7 +44,7 @@ check_python() {
 check_node() {
     local node_ver
     if command -v node &>/dev/null; then
-        node_ver="$(node --version | grep -oP '\d+' | head -1)"
+        node_ver="$(node --version | grep -oE '^v?[0-9]+' | tr -d 'v')"
         if [ "$node_ver" -ge "$MIN_NODE" ] 2>/dev/null; then
             echo "$(node --version)"
             return 0
@@ -107,7 +112,7 @@ step3_deps() {
 
 step4_weights() {
     info 4 "Downloading model weights..."
-    if [ -f "$WEIGHTS_DIR/xception_best.pth" ] && [ -f "$WEIGHTS_DIR/face_landmarker.task" ] && [ -s "$WEIGHTS_DIR/xception_best.pth" ] && [ -s "$WEIGHTS_DIR/face_landmarker.task" ]; then
+    if [ -s "$WEIGHTS_DIR/xception_best.pth" ] && [ -s "$WEIGHTS_DIR/face_landmarker.task" ]; then
         echo "  Weights already present, skipping."
         return 0
     fi
@@ -127,10 +132,7 @@ step5_frontend() {
         warn "frontend/ directory not found, skipping frontend build."
         return 0
     fi
-    cd frontend
-    npm install --silent
-    npm run build
-    cd ..
+    (cd frontend && npm install --silent && npm run build)
     echo "  Frontend built."
 }
 
