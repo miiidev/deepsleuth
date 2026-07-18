@@ -46,3 +46,9 @@ weights/
 
 # Logs
 *.log
+
+# Superpowers / opencode working files
+.superpowers/
+docs/superpowers/
+.opencode/
+opencode.json
