@@ -100,14 +100,20 @@ step3_deps() {
 
     if [ "$HAS_CUDA" -eq 1 ]; then
         echo "  Installing PyTorch with CUDA support..."
-        pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+        if ! pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118; then
+            err "PyTorch installation failed."
+        fi
     else
         echo "  Installing CPU-only PyTorch..."
-        pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+        if ! pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu; then
+            err "PyTorch installation failed."
+        fi
     fi
 
     echo "  Installing remaining packages..."
-    pip install -e .
+    if ! pip install -e .; then
+        err "Package installation failed. Check the error above."
+    fi
 }
 
 step4_weights() {
@@ -118,10 +124,10 @@ step4_weights() {
     fi
     mkdir -p "$WEIGHTS_DIR"
     local tmpzip
-    tmpzip=$(mktemp weights.XXXXXXXXXX)
+    tmpzip=$(mktemp "${TMPDIR:-/tmp}/weights.XXXXXXXXXX")
     trap 'rm -f "$tmpzip"' EXIT
     echo "  Downloading from $WEIGHTS_URL"
-    curl -L --progress-bar -o "$tmpzip" "$WEIGHTS_URL"
+    curl -L --max-time 120 --progress-bar -o "$tmpzip" "$WEIGHTS_URL"
     unzip -o -q "$tmpzip" -d "$WEIGHTS_DIR"
     rm -f "$tmpzip"
     echo "  Weights extracted to $WEIGHTS_DIR/"
@@ -133,7 +139,7 @@ step5_frontend() {
         warn "frontend/ directory not found, skipping frontend build."
         return 0
     fi
-    (cd frontend && npm install --silent && npm run build)
+    (cd frontend && npm install && npm run build)
     echo "  Frontend built."
 }
 

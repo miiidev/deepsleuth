@@ -137,7 +137,7 @@ if exist "%WEIGHTS_DIR%\xception_best.pth" (
 )
 if not exist "%WEIGHTS_DIR%" mkdir "%WEIGHTS_DIR%"
 echo   Downloading from %WEIGHTS_URL%
-curl -L --progress-bar -o "%TEMP%\weights.zip" "%WEIGHTS_URL%"
+curl -L --max-time 120 --progress-bar -o "%TEMP%\weights.zip" "%WEIGHTS_URL%"
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Weight download failed.
     exit /b 1
