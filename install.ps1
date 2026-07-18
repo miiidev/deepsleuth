@@ -135,35 +135,29 @@ if ($env:DEEPSLEUTH_WEIGHTS_URL) {
     }
 }
 
-$weightFiles = @(
-    @{ Name = "xception_best.pth"; Description = "XceptionNet model weights" },
-    @{ Name = "face_landmarker.task"; Description = "MediaPipe face landmarker model" }
-)
+$zipPath = Join-Path $weightsDir "weights.zip"
 
-foreach ($wf in $weightFiles) {
-    $destPath = Join-Path $weightsDir $wf.Name
-    if (Test-Path $destPath) {
-        Write-Success "  $($wf.Name) already exists, skipping"
-        continue
-    }
+$haveXception = Test-Path (Join-Path $weightsDir "xception_best.pth")
+$haveLandmarker = Test-Path (Join-Path $weightsDir "face_landmarker.task")
 
-    $url = "$baseUrl/$($wf.Name)"
-    Write-Host "  Downloading $($wf.Description)..."
+if (-not ($haveXception -and $haveLandmarker)) {
+    $url = "$baseUrl/weights.zip"
+    Write-Host "  Downloading weights.zip..."
     $attempt = 0
     $downloaded = $false
     do {
         $attempt++
         try {
-            Invoke-WebRequest -Uri $url -OutFile $destPath -ErrorAction Stop
-            if ((Get-Item $destPath).Length -gt 0) {
+            Invoke-WebRequest -Uri $url -OutFile $zipPath -ErrorAction Stop
+            if ((Get-Item $zipPath).Length -gt 0) {
                 $downloaded = $true
-                Write-Success "  Saved to weights/$($wf.Name)"
+                Write-Success "  Downloaded weights.zip"
             } else {
-                Remove-Item $destPath -Force -ErrorAction SilentlyContinue
-                Write-StepError "  Downloaded $($wf.Name) is empty (attempt $attempt)"
+                Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
+                Write-StepError "  Downloaded weights.zip is empty (attempt $attempt)"
             }
         } catch {
-            Write-StepError "  Failed to download $($wf.Name) (attempt $attempt): $_"
+            Write-StepError "  Failed to download weights.zip (attempt $attempt): $_"
         }
         if (-not $downloaded -and $attempt -lt 3) {
             Write-Host "  Retrying in 2 seconds..."
@@ -172,10 +166,17 @@ foreach ($wf in $weightFiles) {
     } while (-not $downloaded -and $attempt -lt 3)
 
     if (-not $downloaded) {
-        Write-StepError "  Could not download $($wf.Name) after 3 attempts."
+        Write-StepError "  Could not download weights.zip after 3 attempts."
         Read-Host "Press Enter to exit"
         exit 1
     }
+
+    Write-Host "  Extracting weights.zip..."
+    Expand-Archive -Path $zipPath -DestinationPath $weightsDir -Force
+    Remove-Item $zipPath -Force
+    Write-Success "  Extracted to weights/"
+} else {
+    Write-Success "  Weight files already exist, skipping"
 }
 
 # --- Step 5: Verify installation ---
