@@ -19,30 +19,27 @@ Scores are fused into a weighted composite. No single signal is definitive — t
 ### Prerequisites
 
 - Python 3.11+
-- Node.js 18+ (for frontend build)
+- Node.js 18+
 - CUDA-capable GPU recommended (CPU inference works but is slower)
 
-### Installation
+### One-Command Install
 
+**macOS / Linux:**
 ```bash
 git clone https://github.com/miiidev/deepsleuth.git
 cd deepsleuth
-
-# Backend
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # Linux/Mac
-pip install -e .
-
-# Download model weights (required)
-# Place xception_best.pth and face_landmarker.task in weights/
-
-# Frontend
-cd frontend
-npm install
-npm run build
-cd ..
+chmod +x install.sh
+./install.sh
 ```
+
+**Windows:**
+```cmd
+git clone https://github.com/miiidev/deepsleuth.git
+cd deepsleuth
+install.bat
+```
+
+The script handles everything: virtual environment, dependencies (CUDA-aware PyTorch), model weights, and frontend build.
 
 ### Running
 
