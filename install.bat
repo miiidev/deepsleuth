@@ -137,7 +137,7 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 tar -xf "%TEMP%\weights.zip" -C "%WEIGHTS_DIR%" 2>nul || (
-    :: fallback if tar not available — use PowerShell
+    :: fallback if tar not available ??? use PowerShell
     powershell -Command "Expand-Archive -Path '%TEMP%\weights.zip' -DestinationPath '%WEIGHTS_DIR%' -Force"
 )
 del "%TEMP%\weights.zip" 2>nul
@@ -177,3 +177,4 @@ echo   Or:   python -m backend.cli
 echo.
 echo   Open http://127.0.0.1:8000 in your browser.
 exit /b 0
+
