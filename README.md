@@ -16,43 +16,44 @@ Scores are fused into a weighted composite. No single signal is definitive — t
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.11+
-- Node.js 18+ (for frontend build)
-- CUDA-capable GPU recommended (CPU inference works but is slower)
-
 ### Installation
 
 ```bash
-git clone https://github.com/miiidev/deepsleuth.git
-cd deepsleuth
-
-# Backend
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # Linux/Mac
-pip install -e .
+pip install deepsleuth
 
 # Download model weights (required)
-# Place xception_best.pth and face_landmarker.task in weights/
-
-# Frontend
-cd frontend
-npm install
-npm run build
-cd ..
+deepsleuth download-weights
 ```
 
 ### Running
 
 ```bash
 deepsleuth
-# or
-python -m backend.cli
 ```
 
 Opens at `http://127.0.0.1:8000`. Upload a video (MP4, MOV, AVI, or WEBM, max 3 minutes, 500 MB) and view the analysis.
+
+### Development (contributors)
+
+```bash
+git clone https://github.com/miiidev/deepsleuth.git
+cd deepsleuth
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # Linux/Mac
+pip install -e .
+
+# Frontend
+cd frontend
+npm install
+npm run build
+cd ..
+
+# Or use the build helper:
+python scripts/build_frontend.py
+
+deepsleuth
+```
 
 ## Architecture
 
