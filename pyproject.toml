@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepsleuth"
-version = "0.1.0"
+version = "0.1.1"
 description = "Deepfake detector — upload a video, get a heatmap overlay + report"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -36,6 +36,7 @@ Source = "https://github.com/miiidev/deepsleuth"
 
 [tool.setuptools.packages.find]
 include = ["backend*"]
+exclude = ["backend.venv*"]
 
 [tool.setuptools.package-data]
 backend = ["app/static/**"]
