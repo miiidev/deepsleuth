@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepsleuth"
-version = "0.1.1"
+version = "0.1.2"
 description = "Deepfake detector — upload a video, get a heatmap overlay + report"
 readme = "README.md"
 requires-python = ">=3.11"
