@@ -1,16 +1,20 @@
+import os
 import subprocess
 import shutil
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 STATIC_DIR = REPO_ROOT / "backend" / "app" / "static"
 
+NPM = "npm.cmd" if sys.platform == "win32" else "npm"
+
 
 def main():
     print("Building frontend...")
     subprocess.run(
-        ["npm", "run", "build"],
+        [NPM, "run", "build"],
         cwd=str(FRONTEND_DIR),
         check=True,
     )
