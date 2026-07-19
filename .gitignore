@@ -31,6 +31,9 @@ backend/history/*.json
 
 # Frontend build output
 frontend/dist/
+
+# Built frontend (copied by scripts/build_frontend.py)
+backend/app/static/
 frontend/node_modules/
 
 # Data (raw video datasets + processed face crops)
