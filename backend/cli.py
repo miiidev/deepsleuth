@@ -19,11 +19,11 @@ cli = typer.Typer()
 WEIGHT_URLS = {
     "xception_best.pth": {
         "url": "https://github.com/miiidev/deepsleuth/releases/download/v0.1.0/xception_best.pth",
-        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256": "760a7b4573197d921fb39ab2f3cd78eb7fecb180758d4d15ac4c0478da419187",
     },
     "face_landmarker.task": {
         "url": "https://github.com/miiidev/deepsleuth/releases/download/v0.1.0/face_landmarker.task",
-        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
     },
 }
 
