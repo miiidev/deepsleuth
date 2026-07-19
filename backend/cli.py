@@ -4,6 +4,7 @@ import webbrowser
 import threading
 import time
 import requests
+import hashlib
 from pathlib import Path
 from rich.progress import Progress
 
@@ -16,8 +17,14 @@ import uvicorn
 cli = typer.Typer()
 
 WEIGHT_URLS = {
-    "xception_best.pth": "https://github.com/miiidev/deepsleuth/releases/download/v0.1.0/xception_best.pth",
-    "face_landmarker.task": "https://github.com/miiidev/deepsleuth/releases/download/v0.1.0/face_landmarker.task",
+    "xception_best.pth": {
+        "url": "https://github.com/miiidev/deepsleuth/releases/download/v0.1.0/xception_best.pth",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    },
+    "face_landmarker.task": {
+        "url": "https://github.com/miiidev/deepsleuth/releases/download/v0.1.0/face_landmarker.task",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    },
 }
 
 
@@ -29,28 +36,52 @@ def download_weights(
     weights_dir = Path(settings.WEIGHTS_DIR)
     weights_dir.mkdir(parents=True, exist_ok=True)
 
-    for filename, url in WEIGHT_URLS.items():
+    for filename, meta in WEIGHT_URLS.items():
         dest = weights_dir / filename
         if dest.exists() and not force:
             typer.echo(f"{filename} already exists, skipping (use --force to re-download)")
             continue
 
+        tmp = dest.with_suffix(dest.suffix + ".part")
         typer.echo(f"Downloading {filename}...")
-        with Progress() as progress:
-            task = progress.add_task(f"[cyan]Downloading {filename}...", total=None)
-            response = requests.get(url, stream=True, timeout=300)
-            response.raise_for_status()
-            total = int(response.headers.get("content-length", 0))
-            if total:
-                progress.update(task, total=total)
-            downloaded = 0
-            with open(dest, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-                    downloaded += len(chunk)
-                    if total:
-                        progress.update(task, completed=downloaded)
-            progress.update(task, completed=total or downloaded)
+        try:
+            with Progress() as progress:
+                task = progress.add_task(f"[cyan]Downloading {filename}...", total=None)
+                response = requests.get(meta["url"], stream=True, timeout=300)
+                response.raise_for_status()
+                total = int(response.headers.get("content-length", 0))
+                if total:
+                    progress.update(task, total=total)
+                downloaded = 0
+                with open(tmp, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total:
+                            progress.update(task, completed=downloaded)
+                progress.update(task, completed=total or downloaded)
+
+            sha256 = hashlib.sha256()
+            with open(tmp, "rb") as f:
+                while True:
+                    block = f.read(65536)
+                    if not block:
+                        break
+                    sha256.update(block)
+            actual = sha256.hexdigest()
+            if actual != meta["sha256"]:
+                tmp.unlink(missing_ok=True)
+                typer.echo(
+                    f"SHA256 mismatch for {filename}: expected {meta['sha256']}, got {actual}",
+                    err=True,
+                )
+                raise typer.Exit(code=1)
+
+            tmp.rename(dest)
+        except Exception:
+            if tmp.exists():
+                tmp.unlink(missing_ok=True)
+            raise
 
     typer.echo("All weights downloaded successfully.")
 
