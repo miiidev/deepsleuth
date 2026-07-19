@@ -25,10 +25,20 @@ dependencies = [
     "timm",
     "pydantic",
     "onnxruntime",
+    "platformdirs",
+    "requests",
+    "rich",
 ]
+
+[project.urls]
+Homepage = "https://github.com/miiidev/deepsleuth"
+Source = "https://github.com/miiidev/deepsleuth"
 
 [tool.setuptools.packages.find]
 include = ["backend*"]
+
+[tool.setuptools.package-data]
+backend = ["app/static/**"]
 
 [project.scripts]
 deepsleuth = "backend.cli:main"
